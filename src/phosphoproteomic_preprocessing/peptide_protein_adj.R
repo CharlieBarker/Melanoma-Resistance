@@ -11,6 +11,7 @@ setwd(path_data)
 ####LOAD FUNCTIONS####
 
 source("./src/functions/SLN_normalisation.R")
+
 # regress phospho to total proteome to estimate the "NET" phosphorylation. Written by Lourdes. 
 lm_fun<-function(x){
   y<-as.numeric(unlist(x[grep(pattern = "__PHOS", names(x))]))
