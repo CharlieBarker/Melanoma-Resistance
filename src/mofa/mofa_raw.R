@@ -66,7 +66,7 @@ data_opts <- get_default_data_options(MOFAobject)
 head(data_opts)
 
 model_opts <- get_default_model_options(MOFAobject)
-model_opts$num_factors <- 4
+model_opts$num_factors <- 3
 head(model_opts)
 
 train_opts <- get_default_training_options(MOFAobject)
@@ -100,9 +100,10 @@ variance_per_view<-plot_variance_explained(MOFAobject.trained, x="view", y="fact
 variance_heat<-plot_variance_explained(MOFAobject.trained, x="group", y="factor", plot_total = T)[[2]]
 
 facotrs_plot<-plot_factor(MOFAobject.trained, 
-                          factor = 1:4,
+                          factor = 1:3,
                           color_by = "Drug",
-                          shape_by = "Genetic"
+                          shape_by = "Genetic",
+                          scale = T
 )
 
 
