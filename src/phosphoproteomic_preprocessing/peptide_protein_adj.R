@@ -25,7 +25,7 @@ lm_fun<-function(x){
 }
 
 
-proteome_start<-read.csv(file = "./data/proteomic/processed/combat_imputed_protein.csv")
+proteome_start<-read.csv(file = "./data/proteomic/processed/protein__norm_combat_imp.csv")
 phosphoproteome_start<-read.csv(file = "./data/proteomic/processed/combat_peptide.csv")
 #Phosphopeptide pre processing 
 #get all modifications 

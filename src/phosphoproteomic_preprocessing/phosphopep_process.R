@@ -33,17 +33,17 @@ rename_rows<-function(to_plot, edb){
 }
 
 
-#path_data<-"~/MelanomaProject/data/phosphoproteomics/main/" #original
-path_data<-"~/phd/MelanomaProject/data/phosphoproteomics/main/swiss-prot/total/" #SWISS-plot
+path_data<-"~/Desktop/Melanoma_Resistance/" #SWISS-plot
 setwd(path_data)
 
+
 #Get experimental design 
-design<-read.csv(file = "~/phd/MelanomaProject/data/phosphoproteomics/main/design.csv",header = T)
+design<-read.csv(file = "./data/proteomic/design.csv",header = T)
 design$code<-paste0("X", design$TMT.labels,".pl", design$Plex)
 design$Drug[design$Drug == "WT"] = "Untreated"
 design$total<-paste0(design$Drug,"__", design$Genetic)
 
-regressed_phospho<-read.csv(file = "./phosphopeptide__protein_adjusted.csv")
+regressed_phospho<-read.csv(file = "./data/proteomic/processed/phosphopeptide__protein_adjusted.csv")
 rownames(regressed_phospho)<-regressed_phospho$X
 
 regressed_phospho$X<-NULL
@@ -98,11 +98,11 @@ colnames(to_study)<-str_remove(colnames(to_study), pattern = "\\..+")
 # filter for up-regulated phosphosites
 phosphoL6.mean <- meanAbundance(to_study, grps = colnames(to_study))
 aov <- matANOVA(mat=to_study, grps=colnames(to_study))
-idx <- (aov < 0.1) & (rowSums(abs(phosphoL6.mean) > 1) > 0) #idx is the filter 0.5 and aov of 0.05
+idx <- (aov < 0.1) & (rowSums(abs(phosphoL6.mean) > .5) > 0) #idx is the filter 0.5 and aov of 0.05
 without_dup.reg <- to_study[idx, ,drop = FALSE]
 
 dim(without_dup.reg)
 
 without_dup.reg.std <- standardise(without_dup.reg)
 kinase_substrate_input<-without_dup.reg.std
-write.csv(kinase_substrate_input, file = "~/MelanomaProject/mofa/input_data/phosphosites.csv")
+write.csv(kinase_substrate_input, file = "./data/input_data/phosphosites.csv")

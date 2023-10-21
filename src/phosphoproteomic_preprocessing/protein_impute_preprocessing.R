@@ -55,6 +55,12 @@ design$code<-paste0(design$TMT.labels,".pl", design$Plex)
 design$total<-paste0(design$Drug,"__", design$Genetic)
 grps <- design$total[match(colnames(combided_proteins),design$code)]
 
+#remove MED12
+combided_proteins<-combided_proteins[,!grepl(grps, pattern = "MED12")]
+design<-design[!grepl(design$total, pattern = "MED12"),]
+grps<-grps[!grepl(grps, pattern = "MED12")]
+
+
 ####IMPUTATION####
 
 combided_proteins<-normSLN(combided_proteins)
@@ -75,52 +81,10 @@ ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(prot_data)),
 dim(ppe)
 ppe_filtered <- selectGrps(ppe, grps, 0.5, n=1) 
 dim(ppe_filtered)
-ppe_imputed_tmp <- scImpute(ppe_filtered, 0.5, grps)[,colnames(ppe_filtered)]
+ppe_imputed_tmp <- scImpute(ppe_filtered, 0.6, grps)[,colnames(ppe_filtered)]
 dim(na.omit(data.frame(SummarizedExperiment::assay(ppe_imputed_tmp,"imputed"))))
 
-# Paired tail-based imputation
-ppe_imputed <- ppe_imputed_tmp
-#Impute between Trametinib treatments 
-tram_ARID1A_log<-design$total[match(colnames(ppe_imputed), design$code)] == "Trametinib_10nM__ARID1A_KO"
-tram_MED12_log<-design$total[match(colnames(ppe_imputed), design$code)] == "Trametinib_10nM__MED12_KO"
-tram_WT_log<-design$total[match(colnames(ppe_imputed), design$code)] == "Trametinib_10nM__WT"
-
-ver_ARID1A_log<-design$total[match(colnames(ppe_imputed), design$code)] == "Vermurafenib_1uM__ARID1A_KO"
-var_MED12_log<-design$total[match(colnames(ppe_imputed), design$code)] == "Vermurafenib_1uM__MED12_KO"
-ver_WT_log<-design$total[match(colnames(ppe_imputed), design$code)] == "Vermurafenib_1uM__WT"
-
-WT_ARID1A_log<-design$total[match(colnames(ppe_imputed), design$code)] == "WT__ARID1A_KO"
-WT_MED12_log<-design$total[match(colnames(ppe_imputed), design$code)] == "WT__MED12_KO"
-WT_WT_log<-design$total[match(colnames(ppe_imputed), design$code)] == "WT__WT"
-
-#impute is done within the drug treatments, as these are where the most variation occurs. 
-
-#Impute between Trametinib treatments 
-ppe_imputed[,tram_ARID1A_log] <- ptImpute(ppe_imputed[,tram_WT_log], #control
-                                          ppe_imputed[,tram_ARID1A_log], #ARID1A_Trametinib
-                                          percent1 = 0.6, percent2 = .2, paired = F)
-ppe_imputed[,tram_MED12_log] <- ptImpute(ppe_imputed[,tram_WT_log], #control
-                                         ppe_imputed[,tram_MED12_log], #MED12_Trametinib
-                                         percent1 = 0.6, percent2 = .2, paired = F)
-#Impute between Vermurafenib treatments 
-ppe_imputed[,ver_ARID1A_log] <- ptImpute(ppe_imputed[,ver_WT_log], #control
-                                         ppe_imputed[,ver_ARID1A_log], #ARID1A_Vermurafenib
-                                         percent1 = 0.6, percent2 = .2, paired = F)
-ppe_imputed[,var_MED12_log] <- ptImpute(ppe_imputed[,ver_WT_log], #control
-                                        ppe_imputed[,var_MED12_log], #MED12_Vermurafenib
-                                        percent1 = 0.6, percent2 = .2, paired = F)
-dim(na.omit(data.frame(SummarizedExperiment::assay(ppe_imputed,"imputed"))))
-
-#Impute between WT - care! we only have 2 replicates here. 
-
-ppe_imputed[,WT_ARID1A_log] <- ptImpute(ppe_imputed[,WT_WT_log], #control
-                                        ppe_imputed[,WT_ARID1A_log], #ARID1A_Vermurafenib
-                                        percent1 = .6, percent2 = .2, paired = FALSE)
-ppe_imputed[,WT_MED12_log] <- ptImpute(ppe_imputed[,WT_WT_log], #control
-                                       ppe_imputed[,WT_MED12_log], #MED12_Vermurafenib
-                                       percent1 = .6, percent2 = .2, paired = FALSE)
-
-ppe_imputed_scaled <- medianScaling(ppe_imputed, scale = F, assay = "imputed")
+ppe_imputed_scaled <- medianScaling(ppe_imputed_tmp, scale = F, assay = "imputed")
 #look at our data
 
 p1 = plotQC(SummarizedExperiment::assay(ppe,"Quantification"), 
@@ -155,7 +119,7 @@ design_combat<- design
 design_combat<-design_combat[match(colnames(combat_input), paste0("X", design_combat$code)),]
 batch<-unlist(design_combat$Plex[match(colnames(combat_input),  paste0("X", design_combat$code))])
 design_combat$Drug <- factor(design_combat$Drug, levels = c("WT", "Vermurafenib_1uM", "Trametinib_10nM", "vemurafenib+trametinib"))
-design_combat$Genetic <- factor(design_combat$Genetic, levels = c("WT", "ARID1A_KO", "MED12_KO"))
+design_combat$Genetic <- factor(design_combat$Genetic, levels = c("WT", "ARID1A_KO"))
 
 mod <- model.matrix(~ Drug + Genetic, data = design_combat)
 data_combat <- ComBat(dat = as.matrix(combat_input), batch = batch, mod = mod, par.prior = TRUE)

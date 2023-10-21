@@ -31,7 +31,7 @@ design$code<-paste0("X", design$TMT.labels,".pl", design$Plex)
 design$total<-paste0(design$Drug,"__", design$Genetic)
 
 adjusted_phospho<-read.csv(file = "./data/proteomic/processed/phosphopeptide__protein_adjusted.csv")
-proteins<-read.csv(file = "./data/proteomic/processed/combat_imputed_protein.csv")
+proteins<-read.csv(file = "./data/proteomic/processed/protein__norm_combat_imp.csv")
 
 prepare_mofa_input<-function(input, is.phos=T){
   rownames(input)<-input$X
@@ -56,9 +56,7 @@ prepare_mofa_input<-function(input, is.phos=T){
   return(mofa_in)
 }
 
-mofa_adjusted_phos<-prepare_mofa_input(adjusted_phospho)
 mofa_protein<-prepare_mofa_input(proteins, is.phos = F)
 
-# write.csv(mofa_adjusted_phos, file = "~/MelanomaProject/mofa/input_data/phosphosites_adjusted.csv")
-# write.csv(log2(mofa_protein), file = "~/MelanomaProject/mofa/input_data/proteins_unadjusted.csv")
+write.csv(log2(mofa_protein), file = "./data/input_data/proteins.csv")
 
