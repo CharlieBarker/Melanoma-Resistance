@@ -14,10 +14,10 @@ fisher_threshold = 0.05
 fisher_background = "intact"
 ini_pos = ["False"]
 ini_neg = ["False"]
-damping = 0.85
-rwr_threshold = 0.05
-kde_cutoff = [0.85]
-use_existing_rwr = False
+damping = .95
+rwr_threshold = 0.01
+kde_cutoff = [0.5]
+use_existing_rwr = True
 convert2folder = True
 include_isolated_egos_in_KDE_net = False
 net_format = "graphml"
@@ -62,3 +62,4 @@ for filename in os.listdir(test_dir):
             include_isolated_egos_in_KDE_net=include_isolated_egos_in_KDE_net,
             net_format=net_format,
         )
+
