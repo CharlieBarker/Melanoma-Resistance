@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="g_title" for="graph" attr.name="title" attr.type="string"/>
+  <key id="v_name" for="node" attr.name="name" attr.type="string"/>
+  <key id="v_Gene_name" for="node" attr.name="Gene_name" attr.type="string"/>
+  <key id="v_Is_seed" for="node" attr.name="Is_seed" attr.type="double"/>
+  <key id="e_weight" for="edge" attr.name="weight" attr.type="double"/>
+  <graph id="G" edgedefault="undirected">
+    <data key="g_title">KDE_increased_net</data>
+    <node id="n0">
+      <data key="v_name">P08069</data>
+      <data key="v_Gene_name">IGF1R</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n1">
+      <data key="v_name">P08581</data>
+      <data key="v_Gene_name">MET</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n2">
+      <data key="v_name">P36888</data>
+      <data key="v_Gene_name">FLT3</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n3">
+      <data key="v_name">P04626</data>
+      <data key="v_Gene_name">ERBB2</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n4">
+      <data key="v_name">P21860</data>
+      <data key="v_Gene_name">ERBB3</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n5">
+      <data key="v_name">P29317</data>
+      <data key="v_Gene_name">EPHA2</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n6">
+      <data key="v_name">P01130</data>
+      <data key="v_Gene_name">LDLR</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n7">
+      <data key="v_name">Q70JA7</data>
+      <data key="v_Gene_name">CHSY3</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n8">
+      <data key="v_name">O00241</data>
+      <data key="v_Gene_name">SIRPB1</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n9">
+      <data key="v_name">P43405</data>
+      <data key="v_Gene_name">SYK</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n10">
+      <data key="v_name">Q08722</data>
+      <data key="v_Gene_name">CD47</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n11">
+      <data key="v_name">P35813</data>
+      <data key="v_Gene_name">PPM1A</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n12">
+      <data key="v_name">O75815</data>
+      <data key="v_Gene_name">BCAR3</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n13">
+      <data key="v_name">Q8N122</data>
+      <data key="v_Gene_name">RPTOR</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n14">
+      <data key="v_name">P78324</data>
+      <data key="v_Gene_name">SIRPA</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n15">
+      <data key="v_name">P17676</data>
+      <data key="v_Gene_name">CEBPB</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n16">
+      <data key="v_name">P13612</data>
+      <data key="v_Gene_name">ITGA4</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n17">
+      <data key="v_name">P15036</data>
+      <data key="v_Gene_name">ETS2</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n18">
+      <data key="v_name">Q9H596</data>
+      <data key="v_Gene_name">DUSP21</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n19">
+      <data key="v_name">P54764</data>
+      <data key="v_Gene_name">EPHA4</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n20">
+      <data key="v_name">Q13308</data>
+      <data key="v_Gene_name">PTK7</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n21">
+      <data key="v_name">P29320</data>
+      <data key="v_Gene_name">EPHA3</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n22">
+      <data key="v_name">P17275</data>
+      <data key="v_Gene_name">JUNB</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n23">
+      <data key="v_name">Q96RU8</data>
+      <data key="v_Gene_name">TRIB1</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n24">
+      <data key="v_name">Q7L5Y6</data>
+      <data key="v_Gene_name">DET1</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n25">
+      <data key="v_name">Q92519</data>
+      <data key="v_Gene_name">TRIB2</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n26">
+      <data key="v_name">Q8TDQ0</data>
+      <data key="v_Gene_name">HAVCR2</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n27">
+      <data key="v_name">P15407</data>
+      <data key="v_Gene_name">FOSL1</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n28">
+      <data key="v_name">P28702</data>
+      <data key="v_Gene_name">RXRB</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n29">
+      <data key="v_name">P50549</data>
+      <data key="v_Gene_name">ETV1</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n30">
+      <data key="v_name">O43597</data>
+      <data key="v_Gene_name">SPRY2</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n31">
+      <data key="v_name">Q16828</data>
+      <data key="v_Gene_name">DUSP6</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n32">
+      <data key="v_name">P28356</data>
+      <data key="v_Gene_name">HOXD9</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n33">
+      <data key="v_name">Q9Y2C9</data>
+      <data key="v_Gene_name">TLR6</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n34">
+      <data key="v_name">P13688</data>
+      <data key="v_Gene_name">CEACAM1</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n35">
+      <data key="v_name">Q5SW96</data>
+      <data key="v_Gene_name">LDLRAP1</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n36">
+      <data key="v_name">P43354</data>
+      <data key="v_Gene_name">NR4A2</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n37">
+      <data key="v_name">P78536</data>
+      <data key="v_Gene_name">ADAM17</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n38">
+      <data key="v_name">Q8NHY2</data>
+      <data key="v_Gene_name">RFWD2</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n39">
+      <data key="v_name">P17535</data>
+      <data key="v_Gene_name">JUND</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n40">
+      <data key="v_name">Q16690</data>
+      <data key="v_Gene_name">DUSP5</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n41">
+      <data key="v_name">O00206</data>
+      <data key="v_Gene_name">TLR4</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n42">
+      <data key="v_name">P06756</data>
+      <data key="v_Gene_name">ITGAV</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n43">
+      <data key="v_name">Q86X52</data>
+      <data key="v_Gene_name">CHSY1</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n44">
+      <data key="v_name">Q15375</data>
+      <data key="v_Gene_name">EPHA7</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n45">
+      <data key="v_name">P29322</data>
+      <data key="v_Gene_name">EPHA8</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n46">
+      <data key="v_name">P20827</data>
+      <data key="v_Gene_name">EFNA1</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n47">
+      <data key="v_name">P16144</data>
+      <data key="v_Gene_name">ITGB4</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n48">
+      <data key="v_name">P16671</data>
+      <data key="v_Gene_name">CD36</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n49">
+      <data key="v_name">Q8WTR2</data>
+      <data key="v_Gene_name">DUSP19</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n50">
+      <data key="v_name">Q68J44</data>
+      <data key="v_Gene_name">DUPD1</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n51">
+      <data key="v_name">P09016</data>
+      <data key="v_Gene_name">HOXD4</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n52">
+      <data key="v_name">P42681</data>
+      <data key="v_Gene_name">TXK</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n53">
+      <data key="v_name">P18564</data>
+      <data key="v_Gene_name">ITGB6</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n54">
+      <data key="v_name">Q04912</data>
+      <data key="v_Gene_name">MST1R</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n55">
+      <data key="v_name">Q9P1W8</data>
+      <data key="v_Gene_name">SIRPG</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n56">
+      <data key="v_name">Q9UKW4</data>
+      <data key="v_Gene_name">VAV3</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n57">
+      <data key="v_name">P10747</data>
+      <data key="v_Gene_name">CD28</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n58">
+      <data key="v_name">P05106</data>
+      <data key="v_Gene_name">ITGB3</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n59">
+      <data key="v_name">Q9UQQ2</data>
+      <data key="v_Gene_name">SH2B3</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n60">
+      <data key="v_name">P01135</data>
+      <data key="v_Gene_name">TGFA</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n61">
+      <data key="v_name">P98077</data>
+      <data key="v_Gene_name">SHC2</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n62">
+      <data key="v_name">Q9NRP7</data>
+      <data key="v_Gene_name">STK36</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <node id="n63">
+      <data key="v_name">P43268</data>
+      <data key="v_Gene_name">ETV4</data>
+      <data key="v_Is_seed">1</data>
+    </node>
+    <node id="n64">
+      <data key="v_name">P08514</data>
+      <data key="v_Gene_name">ITGA2B</data>
+      <data key="v_Is_seed">0</data>
+    </node>
+    <edge source="n0" target="n1">
+      <data key="e_weight">0.231936521325843</data>
+    </edge>
+    <edge source="n1" target="n4">
+      <data key="e_weight">0.246082244870934</data>
+    </edge>
+    <edge source="n3" target="n4">
+      <data key="e_weight">0.346152689396583</data>
+    </edge>
+    <edge source="n1" target="n9">
+      <data key="e_weight">0.12725135246734</data>
+    </edge>
+    <edge source="n2" target="n9">
+      <data key="e_weight">0.155698311191113</data>
+    </edge>
+    <edge source="n3" target="n9">
+      <data key="e_weight">0.182919268226751</data>
+    </edge>
+    <edge source="n4" target="n9">
+      <data key="e_weight">0.140117681698083</data>
+    </edge>
+    <edge source="n8" target="n9">
+      <data key="e_weight">0.0945403220526021</data>
+    </edge>
+    <edge source="n8" target="n10">
+      <data key="e_weight">0.279178804197808</data>
+    </edge>
+    <edge source="n0" target="n11">
+      <data key="e_weight">0.101362565961019</data>
+    </edge>
+    <edge source="n3" target="n11">
+      <data key="e_weight">0.116287862790838</data>
+    </edge>
+    <edge source="n4" target="n11">
+      <data key="e_weight">0.10455928901432</data>
+    </edge>
+    <edge source="n5" target="n11">
+      <data key="e_weight">0.0666063818783239</data>
+    </edge>
+    <edge source="n1" target="n12">
+      <data key="e_weight">0.113855321993</data>
+    </edge>
+    <edge source="n3" target="n12">
+      <data key="e_weight">0.145363350061027</data>
+    </edge>
+    <edge source="n4" target="n12">
+      <data key="e_weight">0.167092666681752</data>
+    </edge>
+    <edge source="n0" target="n14">
+      <data key="e_weight">0.119756870811236</data>
+    </edge>
+    <edge source="n10" target="n14">
+      <data key="e_weight">0.402126208312849</data>
+    </edge>
+    <edge source="n0" target="n18">
+      <data key="e_weight">0.189214993644781</data>
+    </edge>
+    <edge source="n4" target="n18">
+      <data key="e_weight">0.123311121406909</data>
+    </edge>
+    <edge source="n11" target="n20">
+      <data key="e_weight">0.0921934901454114</data>
+    </edge>
+    <edge source="n18" target="n20">
+      <data key="e_weight">0.0530582923344322</data>
+    </edge>
+    <edge source="n18" target="n21">
+      <data key="e_weight">0.0816489986209223</data>
+    </edge>
+    <edge source="n15" target="n23">
+      <data key="e_weight">0.124133915649874</data>
+    </edge>
+    <edge source="n22" target="n23">
+      <data key="e_weight">0.0787527545913464</data>
+    </edge>
+    <edge source="n22" target="n24">
+      <data key="e_weight">0.0666848095515428</data>
+    </edge>
+    <edge source="n23" target="n24">
+      <data key="e_weight">0.19171778941668</data>
+    </edge>
+    <edge source="n13" target="n25">
+      <data key="e_weight">0.182737698462785</data>
+    </edge>
+    <edge source="n23" target="n25">
+      <data key="e_weight">0.456818269311142</data>
+    </edge>
+    <edge source="n24" target="n25">
+      <data key="e_weight">0.333166203291805</data>
+    </edge>
+    <edge source="n9" target="n26">
+      <data key="e_weight">0.168420615081189</data>
+    </edge>
+    <edge source="n22" target="n27">
+      <data key="e_weight">0.288151785895892</data>
+    </edge>
+    <edge source="n26" target="n34">
+      <data key="e_weight">0.194204833105779</data>
+    </edge>
+    <edge source="n6" target="n35">
+      <data key="e_weight">0.173872732376013</data>
+    </edge>
+    <edge source="n28" target="n36">
+      <data key="e_weight">0.261963370484919</data>
+    </edge>
+    <edge source="n17" target="n38">
+      <data key="e_weight">0.0738690165582534</data>
+    </edge>
+    <edge source="n25" target="n38">
+      <data key="e_weight">0.279074645047431</data>
+    </edge>
+    <edge source="n29" target="n38">
+      <data key="e_weight">0.086594600108482</data>
+    </edge>
+    <edge source="n22" target="n39">
+      <data key="e_weight">0.371020255025523</data>
+    </edge>
+    <edge source="n27" target="n39">
+      <data key="e_weight">0.257741750940836</data>
+    </edge>
+    <edge source="n38" target="n39">
+      <data key="e_weight">0.0801031581928316</data>
+    </edge>
+    <edge source="n33" target="n41">
+      <data key="e_weight">0.342191429103022</data>
+    </edge>
+    <edge source="n37" target="n42">
+      <data key="e_weight">0.118339517567064</data>
+    </edge>
+    <edge source="n7" target="n43">
+      <data key="e_weight">0.503077526716474</data>
+    </edge>
+    <edge source="n5" target="n44">
+      <data key="e_weight">0.236779030124966</data>
+    </edge>
+    <edge source="n21" target="n44">
+      <data key="e_weight">0.272067097607434</data>
+    </edge>
+    <edge source="n5" target="n46">
+      <data key="e_weight">0.17127758501257</data>
+    </edge>
+    <edge source="n19" target="n46">
+      <data key="e_weight">0.274261698117478</data>
+    </edge>
+    <edge source="n9" target="n48">
+      <data key="e_weight">0.166215339644724</data>
+    </edge>
+    <edge source="n33" target="n48">
+      <data key="e_weight">0.240345404603979</data>
+    </edge>
+    <edge source="n41" target="n48">
+      <data key="e_weight">0.240659398050408</data>
+    </edge>
+    <edge source="n0" target="n49">
+      <data key="e_weight">0.231779302500784</data>
+    </edge>
+    <edge source="n3" target="n49">
+      <data key="e_weight">0.145673853547279</data>
+    </edge>
+    <edge source="n4" target="n49">
+      <data key="e_weight">0.218112655588239</data>
+    </edge>
+    <edge source="n5" target="n49">
+      <data key="e_weight">0.0906919302100007</data>
+    </edge>
+    <edge source="n20" target="n49">
+      <data key="e_weight">0.0596108348382643</data>
+    </edge>
+    <edge source="n0" target="n50">
+      <data key="e_weight">0.2164782177289</data>
+    </edge>
+    <edge source="n4" target="n50">
+      <data key="e_weight">0.140901154389516</data>
+    </edge>
+    <edge source="n5" target="n50">
+      <data key="e_weight">0.0861030104620298</data>
+    </edge>
+    <edge source="n20" target="n50">
+      <data key="e_weight">0.0612185007189587</data>
+    </edge>
+    <edge source="n0" target="n52">
+      <data key="e_weight">0.16317159991178</data>
+    </edge>
+    <edge source="n1" target="n52">
+      <data key="e_weight">0.190613229642778</data>
+    </edge>
+    <edge source="n3" target="n52">
+      <data key="e_weight">0.185700588308992</data>
+    </edge>
+    <edge source="n4" target="n52">
+      <data key="e_weight">0.179295353189788</data>
+    </edge>
+    <edge source="n31" target="n52">
+      <data key="e_weight">0.110594806271837</data>
+    </edge>
+    <edge source="n42" target="n53">
+      <data key="e_weight">0.180811146005606</data>
+    </edge>
+    <edge source="n0" target="n54">
+      <data key="e_weight">0.285757182386497</data>
+    </edge>
+    <edge source="n1" target="n54">
+      <data key="e_weight">0.262511125012399</data>
+    </edge>
+    <edge source="n10" target="n55">
+      <data key="e_weight">0.189443988930626</data>
+    </edge>
+    <edge source="n1" target="n56">
+      <data key="e_weight">0.0976004105727151</data>
+    </edge>
+    <edge source="n3" target="n56">
+      <data key="e_weight">0.112122310646157</data>
+    </edge>
+    <edge source="n4" target="n56">
+      <data key="e_weight">0.12208941345631</data>
+    </edge>
+    <edge source="n0" target="n57">
+      <data key="e_weight">0.0964731182747018</data>
+    </edge>
+    <edge source="n9" target="n58">
+      <data key="e_weight">0.141671168956635</data>
+    </edge>
+    <edge source="n42" target="n58">
+      <data key="e_weight">0.430101430759883</data>
+    </edge>
+    <edge source="n0" target="n59">
+      <data key="e_weight">0.163798162937162</data>
+    </edge>
+    <edge source="n1" target="n59">
+      <data key="e_weight">0.0868043127581805</data>
+    </edge>
+    <edge source="n3" target="n59">
+      <data key="e_weight">0.116465698757606</data>
+    </edge>
+    <edge source="n4" target="n59">
+      <data key="e_weight">0.115335941019599</data>
+    </edge>
+    <edge source="n9" target="n59">
+      <data key="e_weight">0.0828129551500151</data>
+    </edge>
+    <edge source="n26" target="n59">
+      <data key="e_weight">0.0724269977614158</data>
+    </edge>
+    <edge source="n3" target="n60">
+      <data key="e_weight">0.215873069295333</data>
+    </edge>
+    <edge source="n15" target="n60">
+      <data key="e_weight">0.0913130222843595</data>
+    </edge>
+    <edge source="n37" target="n60">
+      <data key="e_weight">0.209182701896761</data>
+    </edge>
+    <edge source="n1" target="n61">
+      <data key="e_weight">0.112998971327741</data>
+    </edge>
+    <edge source="n3" target="n61">
+      <data key="e_weight">0.159688678274833</data>
+    </edge>
+    <edge source="n51" target="n63">
+      <data key="e_weight">0.512472803073969</data>
+    </edge>
+    <edge source="n58" target="n64">
+      <data key="e_weight">0.194753386847308</data>
+    </edge>
+  </graph>
+</graphml>

@@ -1,0 +1,5 @@
+DB id	adjusted_p	nodes_in_the_network	N_of_seed_nodes	Description	gene_names
+bioplanet_1021	4.725068949084555e-06	6	0	Activation of DNA fragmentation factor	HIST1H1C	HIST1H1E	HIST1H1A	HIST1H1B	H1F0	HIST1H1D
+bioplanet_303	7.256052711956549e-06	9	0	Allograft rejection	HLA-DPB1	HLA-DPA1	PRF1	CD80	HLA-DOB	HLA-DQB1	IL12A	GZMB	IL12B
+bioplanet_1325	3.273282381601976e-05	4	1	PIK3C1/B pathway	PDE3B	PIK3CG	MAPK1	PIK3R6
+bioplanet_298	3.409583649570962e-05	9	0	Type 1 diabetes mellitus	HLA-DPB1	HLA-DPA1	PRF1	CD80	HLA-DOB	HLA-DQB1	IL12A	GZMB	IL12B
