@@ -1,0 +1,51 @@
+home_dir<-"~/Desktop/Melanoma_Resistance/"
+setwd(home_dir)
+
+library(pathview)
+library(MOFA2)
+
+###enrichment of the weights #### 
+MOFAobject.trained<-load_model(file = "./results/mofa/mofa_object.hdf5")
+
+weights <- get_weights(MOFAobject.trained, 
+                       views = "all", 
+                       as.data.frame = TRUE 
+)
+
+
+list_of_inputs<-list(#signalome_view=data.frame(read.csv("input_data/signalome_by_sample.csv")),
+  phospho=data.frame(read.csv("./data/input_data/phosphosites.csv"))
+  ,protein=data.frame(read.csv("./data/input_data/proteins.csv"))
+  ,mRNA=data.frame(read.csv("./data/input_data/rna_expression.csv"))
+)
+
+RTKs<-c("IGF1R", 
+        "ERBB3", "EGFR", "EGF",
+        "EPHA2", "EPHA7",
+        "KIT",
+        "NTRK2",
+        "KDR",
+        "FLT1",
+        "FGFR2", "FGF1", "FGFR1", "FGF2",
+        "CD44", 
+        "INSR")
+neg_feedback<-c("DUSP1", "DUSP2", "DUSP4")
+
+
+rtk_mrna<-reshape2::melt(list_of_inputs$mRNA[list_of_inputs$mRNA$X %in% RTKs,])
+rtk_mrna$variable<-sub("*\\.[0-9]", "", rtk_mrna$variable)
+
+rtk_mrna <- rtk_mrna |>
+  separate_wider_delim(variable, delim = "__", names = c("drug", "ko"))
+
+rtk_mrna %>%
+  ggplot( aes(x=ko, y=value, fill=drug)) +
+  geom_boxplot() +
+  geom_jitter(color="black", size=0.4, alpha=0.9) +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=11)
+  ) +
+  ggtitle("mRNA abundances of central RTKs") +
+  xlab("") + cowplot::theme_cowplot() +
+  facet_wrap(~X, scales = "free_y")
