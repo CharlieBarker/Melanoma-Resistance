@@ -1,4 +1,4 @@
-setwd(dir = "~/phd/MelanomaProject/mofa")
+setwd(dir = "~/Desktop/Melanoma_Resistance/")
 
 library(fgsea)
 library(gprofiler2)
@@ -9,7 +9,7 @@ library(stringr)
 library(RColorBrewer)
 library(tidyverse)
 
-mofa<-load_model(file.path("~/phd/MelanomaProject/mofa/test.hdf5"))
+mofa<-load_model(file = "./results/mofa/mofa_object.hdf5")
 #add meta data 
 sample_metadata <- data.frame(
   sample = samples_names(mofa)[[1]],
@@ -19,16 +19,15 @@ sample_metadata <- data.frame(
 
 samples_metadata(mofa) <- sample_metadata
 
-plot_factors(mofa, factors = 1:4,
-             color_by = "Drug",
-             shape_by = "Genetic")
-
-
 #get weights
 weights <- get_weights(mofa, 
                        views = "all", 
                        as.data.frame = TRUE 
 )
+
+#factor 1 has been times by -1 so that all factors are consistent in that control is down and test is up 
+weights[weights$factor == "Factor1",]$value <- weights[weights$factor == "Factor1",]$value * -1
+
 weights_factors<-lapply(unique(weights$factor), function(x){weights[weights$factor==x,]})
 names(weights_factors)<-unique(weights$factor)
 ordered_weights<-lapply(weights_factors, function(x){ordered_weights<-x[order(x$value),]
@@ -72,45 +71,56 @@ factors_list<-lapply(factors_list, function(x){
   x$phospho<-lapply(x$phospho, as.numeric)
   return(x)
 })
-factors_list<-lapply(factors_list, function(x){
-  x$phospho<-unlist(lapply(x$phospho, function(x){sum(abs(x))}))
-  return(x)
-})
+
+# Your dataframes in the list (I'm assuming it's named factors_list)
+# factors_list <- list(data.frame(...), data.frame(...), ...)
+
+# Define a custom function to find the element with the highest absolute value in "phospho"
+find_max_abs_element <- function(df) {
+  df$phospho <- lapply(df$phospho, function(vec) {
+    if (length(vec) > 0) {
+      max_abs_value <- which.max(abs(as.numeric(vec)))
+      return(vec[max_abs_value])
+    } else {
+      return(0)  # If the vector is empty, return 0
+    }
+  })
+  return(df)
+}
+
+# Apply the custom function to each dataframe in factors_list
+factors_list <- lapply(factors_list, find_max_abs_element)
+
 
 #make sure the remaining attributes are as.numeric
 
 factors_list<-lapply(factors_list, function(x){
   #replace elements without measurement with 0
-  x$kinase_view[lengths(x$kinase_view) == 0] <- 0
   x$mRNA[lengths(x$mRNA) == 0] <- 0
   x$protein[lengths(x$protein) == 0] <- 0
-  x$tf_view[lengths(x$tf_view) == 0] <- 0
   #ad.numeric
-  x$kinase_view<-unlist(lapply(x$kinase_view, function(x){unlist(as.numeric(x))}))
   x$mRNA<-unlist(lapply(x$mRNA, function(x){unlist(as.numeric(x))}))
   x$protein<-unlist(lapply(x$protein, function(x){unlist(as.numeric(x))}))
-  x$tf_view<-unlist(lapply(x$tf_view, function(x){unlist(as.numeric(x))}))
   #replace elements without measurement with NA
-  x$kinase_view[x$kinase_view == 0] <- 0
   x$mRNA[x$mRNA == 0] <- 0
   x$protein[x$protein == 0] <- 0
-  x$tf_view[x$tf_view == 0] <- 0
   x$phospho[x$phospho == 0] <- 0
   #round to 2 digits (indistinguishable to our eyes anyway in terms of plotting colour)
-  x$kinase_view<-round(x$kinase_view, digits = 2)
   x$mRNA<-round(x$mRNA, digits = 2)
   x$protein<-round(x$protein, digits = 2)
-  x$tf_view<-round(x$tf_view, digits = 2)
-  x$phospho<-round(x$phospho, digits = 2)
-  
+  x$phospho<-round(unlist(x$phospho), digits = 2)
   return(x)
 })
 
 library(readr)
 lapply(names(factors_list),
-       function(x){write_delim(x = factors_list[[x]], file = paste0("./omics_analyser_inpt/", x, ".txt"), delim = "\t", col_names = T)})
+       function(x){write_delim(x = factors_list[[x]], file = paste0("./results/phuego/omics_analyser_inpt/", x, ".txt"), delim = "\t", col_names = T)})
+
+
 
 write.csv(complete_weights,file = "model_weights_raw_and_processed.csv")
+
+
 
 plot_labelled_factor_weights<-function(factor_list, 
                                        factor_to_plot,

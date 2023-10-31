@@ -19,6 +19,14 @@ list_of_inputs<-list(#signalome_view=data.frame(read.csv("input_data/signalome_b
   ,mRNA=data.frame(read.csv("./data/input_data/rna_expression.csv"))
 )
 
+# Define the drugs and their corresponding colors
+drug_colors <- c(
+  "Untreated" = "#A2AEBB",
+  "Vemurafenib" = "#FFBA08",
+  "Trametinib" = "#D00000",
+  "Combination" = "#3F88C5"
+)
+
 RTKs<-c("IGF1R", 
         "ERBB3", "EGFR", "EGF",
         "EPHA2", "EPHA7",
@@ -34,14 +42,21 @@ neg_feedback<-c("DUSP1", "DUSP2", "DUSP4")
 
 rtk_mrna<-reshape2::melt(list_of_inputs$mRNA[list_of_inputs$mRNA$X %in% RTKs,])
 rtk_mrna$variable<-sub("*\\.[0-9]", "", rtk_mrna$variable)
-
 rtk_mrna <- rtk_mrna |>
   separate_wider_delim(variable, delim = "__", names = c("drug", "ko"))
+
+
+rtk_mrna$drug<-names(replacement_Vec)[match(rtk_mrna$drug, unname(replacement_Vec))]
+# Define the desired order of levels
+desired_order <- c("Untreated", "Vemurafenib", "Trametinib", "Combination")
+# Convert my_column to a factor with the specified order
+rtk_mrna$drug <- factor(rtk_mrna$drug, levels = desired_order)
 
 rtk_mrna %>%
   ggplot( aes(x=ko, y=value, fill=drug)) +
   geom_boxplot() +
   geom_jitter(color="black", size=0.4, alpha=0.9) +
+  scale_fill_manual(values = drug_colors) +
   theme(
     legend.position="none",
     plot.title = element_text(size=11)

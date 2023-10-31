@@ -26,6 +26,18 @@ proteins_of_interest<-list(
   TRIB2="Q92519"
 )
 
+proteins_of_interest<-list(
+  FGFR2="FGFR2",
+  FGFR1="FGFR1",
+  FGF1="FGF1",
+  FGF2="FGF2"
+)
+
+proteins_of_interest<-list(
+  RAF1="P04049",
+  KRAS="P01116"
+)
+
 # Define the drugs and their corresponding colors
 drug_colors <- c(
   "Untreated" = "#A2AEBB",
@@ -65,7 +77,7 @@ split_exp_conditions<-function(df){
 proteins_df<-split_exp_conditions(proteins_df)
 rna_df<-split_exp_conditions(rna_df)
 
-rna_wt<-rna_df[rna_df$ko=="WT",]
+rna_wt<-proteins_df#[rna_df$ko=="WT",]
 
 
 # Step 1: Call the pdf command to start the plot
@@ -78,7 +90,7 @@ ggplot(rna_wt) +
   geom_bar(aes(x = drug, y = mean, fill = drug), stat = "identity", alpha = 0.5) +
   geom_errorbar(aes(x = drug, ymin = mean - ic, ymax = mean + ic), width = 0.4, colour = "orange", alpha = 0.9, size = 1.5) +
   cowplot::theme_cowplot() + 
-  facet_wrap(~X) + 
+  facet_grid(X~ko, scales = "free") + 
   scale_fill_manual(values = drug_colors) +
   labs(y = "RNA abundance") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
@@ -90,4 +102,17 @@ ggplot(rna_wt) +
 # Step 3: Run dev.off() to create the file!
 dev.off()
 
+
+rna_wt %>%
+  ggplot( aes(x=ko, y=value, fill=drug)) +
+  geom_boxplot() +
+  geom_jitter(color="black", size=0.4, alpha=0.9) +
+  scale_fill_manual(values = drug_colors) +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=11)
+  ) +
+  ggtitle("mRNA abundances of central RTKs") +
+  xlab("") + cowplot::theme_cowplot() +
+  facet_wrap(~X, scales = "free_y")
 

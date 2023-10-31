@@ -2,6 +2,7 @@ home_dir<-"~/Desktop/Melanoma_Resistance/"
 setwd(home_dir)
 
 library(pathview)
+library(EnsDb.Hsapiens.v86)
 
 ###enrichment of the weights #### 
 
@@ -40,7 +41,7 @@ weights_factors_up_low<-lapply(weights_factors_up_low, function(x){x$padj<-0.01;
 weights_factors_up_low<-lapply(weights_factors_up_low, function(x){x[,c("protein", "value")]})
 
 MAPKview_input<-weights_factors_up_low
-factor_1<-MAPKview_input$Factor1
+factor_1<-MAPKview_input$Factor3
 kegg_input<-gprofiler2::gconvert(factor_1$protein)
 dme_input_df<-merge(x = kegg_input, y = factor_1,
                     by.x= "input", by.y = "protein")
