@@ -1,7 +1,7 @@
 import scanpy as sc
 import decoupler as dc
 
-# Only needed for processing
+# Only needed for processing https://decoupler-py.readthedocs.io/en/latest/notebooks/bulk.html
 import numpy as np
 import pandas as pd
 from anndata import AnnData
@@ -47,9 +47,27 @@ adata = adata.drop(columns='ENSEMBL_ID')
 # Transform to AnnData object
 adata = adata.T.head()
 # Remove columns with NaN column names
-adata = adata.dropna(axis=1, how='all')
+adata = adata.loc[:, ~adata.columns.isna()]
 
-print(adata.head())
 adata = AnnData(adata, dtype=np.float32)
 adata.var_names_make_unique()
-adata
+
+#Inside an AnnData object, there is the .obs attribute where we can store the metadata of our samples.
+
+# Process treatment information
+adata.obs['condition'] = ['control' if '-Ctrl' in sample_id else 'treatment' for sample_id in adata.obs.index]
+
+# Process sample information
+adata.obs['sample_id'] = [sample_id.split('_')[0] for sample_id in adata.obs.index]
+
+# Visualize metadata
+adata.obs
+print(design)
+
+dc.plot_filter_by_expr(adata, group=None, min_count=10, min_total_count=15, large_n=1, min_prop=1)
+
+# Obtain genes that pass the thresholds
+genes = dc.filter_by_expr(adata, group=None, min_count=10, min_total_count=15, large_n=1, min_prop=1)
+
+# Filter by these genes
+adata = adata[:, genes].copy()
