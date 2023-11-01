@@ -1,3 +1,5 @@
+#%%
+
 import scanpy as sc
 import decoupler as dc
 
@@ -7,15 +9,13 @@ import pandas as pd
 from anndata import AnnData
 import os
 
-# Set the desired directory path
-directory_path = '/Users/charliebarker/Desktop/Melanoma_Resistance'
 
-# Change the current working directory to the desired directory
-os.chdir(directory_path)
 
+# Retrieve CollecTRI gene regulatory network
+collectri = dc.get_collectri(organism='human', split_complexes=False)
 # Read raw data and process it
-file_path = './data/RNAseq/data/geneCounts_fixed.csv'
-design_path = './data/RNAseq/Study_design.csv'
+file_path = '/Users/charliebarker/Desktop/Melanoma_Resistance/data/RNAseq/data/geneCounts_fixed.csv'
+design_path = '/Users/charliebarker/Desktop/Melanoma_Resistance/data/RNAseq/Study_design.csv'
 
 adata = pd.read_csv(file_path)
 design = pd.read_csv(design_path)
@@ -55,14 +55,12 @@ adata.var_names_make_unique()
 #Inside an AnnData object, there is the .obs attribute where we can store the metadata of our samples.
 
 # Process treatment information
-adata.obs['condition'] = ['control' if '-Ctrl' in sample_id else 'treatment' for sample_id in adata.obs.index]
-
-# Process sample information
-adata.obs['sample_id'] = [sample_id.split('_')[0] for sample_id in adata.obs.index]
+adata.obs['trametinib'] = ['treatment' if 'Trametinib' in sample_id else 'control' for sample_id in adata.obs.index]
+adata.obs['vemurafenib'] = ['treatment' if 'Vermurafenib' in sample_id else 'control' for sample_id in adata.obs.index]
+adata.obs['combination'] = ['treatment' if 'and' in sample_id else 'control' for sample_id in adata.obs.index]
+adata.obs['ARID1A_KO'] = ['treatment' if 'ARID1A_KO' in sample_id else 'control' for sample_id in adata.obs.index]
 
 # Visualize metadata
-adata.obs
-print(design)
 
 dc.plot_filter_by_expr(adata, group=None, min_count=10, min_total_count=15, large_n=1, min_prop=1)
 
@@ -71,3 +69,48 @@ genes = dc.filter_by_expr(adata, group=None, min_count=10, min_total_count=15, l
 
 # Filter by these genes
 adata = adata[:, genes].copy()
+
+# Import DESeq2
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds import DeseqStats
+
+# Build DESeq2 object
+dds = DeseqDataSet(
+    adata=adata,
+    design_factors='ARID1A_KO',
+    refit_cooks=True,
+    n_cpus=8,
+)
+# Compute LFCs
+dds.deseq2()
+
+
+# Extract contrast between ARID1A_KO vs normal
+stat_res = DeseqStats(dds, contrast=["ARID1A-KO", 'treatment', 'control'], n_cpus=8)
+
+# Compute Wald test
+stat_res.summary()
+
+# Shrink LFCs
+stat_res.lfc_shrink(coeff='ARID1A-KO_treatment_vs_control')
+
+# Extract results
+results_df = stat_res.results_df
+dc.plot_volcano_df(results_df, x='log2FoldChange', y='padj', top=20)
+
+#%%
+
+
+#transcription factor inference 
+
+# Retrieve CollecTRI gene regulatory network
+mat = results_df[['stat']].T.rename(index={'stat': 'ARID1A-KO_treatment_vs_control'})
+
+collectri
+
+# %%
+tf_acts, tf_pvals = dc.run_ulm(mat=mat, net=collectri, verbose=True)	\
+
+# Extract logFCs and pvals
+logFCs = results_df[['log2FoldChange']].T.rename(index={'log2FoldChange': 'treatment.vs.control'})
+pvals = results_df[['padj']].T.rename(index={'padj': 'treatment.vs.control'})
