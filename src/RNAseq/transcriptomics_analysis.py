@@ -56,14 +56,17 @@ adata = AnnData(adata, dtype=np.float32)
 adata.var_names_make_unique()
 #%%
 
-
 #Inside an AnnData object, there is the .obs attribute where we can store the metadata of our samples.
 
 # Process treatment information
+adata.obs['sample-name'] = adata.obs.index.tolist()
 adata.obs['trametinib'] = ['treatment' if 'Trametinib' in sample_id else 'control' for sample_id in adata.obs.index]
 adata.obs['vemurafenib'] = ['treatment' if 'Vermurafenib' in sample_id else 'control' for sample_id in adata.obs.index]
 adata.obs['combination'] = ['treatment' if 'and' in sample_id else 'control' for sample_id in adata.obs.index]
 adata.obs['ARID1A_KO'] = ['treatment' if 'ARID1A_KO' in sample_id else 'control' for sample_id in adata.obs.index]
+
+#%%
+#Run DESEQ2
 
 # Visualize metadata
 
@@ -82,45 +85,51 @@ from pydeseq2.ds import DeseqStats
 # Build DESeq2 object
 dds = DeseqDataSet(
     adata=adata,
-    design_factors='ARID1A_KO',
+    design_factors='sample-name',
+    ref_level = ['sample-name', 'Untreated WT'],
     refit_cooks=True,
     n_cpus=8,
 )
 # Compute LFCs
 dds.deseq2()
 
+#%%
+# Extract contrast
 
-# Extract contrast between ARID1A_KO vs normal
-stat_res = DeseqStats(dds, contrast=["ARID1A-KO", 'treatment', 'control'], n_cpus=8)
+stat_res = DeseqStats(dds, contrast=["sample-name", 'Untreated ARID1A-KO', 'Untreated WT'], 
+                      n_cpus=8)
 
+
+exp_name = 'sample-name Untreated ARID1A-KO vs Untreated WT'
 # Compute Wald test
 stat_res.summary()
 
 # Shrink LFCs
-stat_res.lfc_shrink(coeff='ARID1A-KO_treatment_vs_control')
+stat_res.lfc_shrink()
 
 # Extract results
 results_df = stat_res.results_df
 dc.plot_volcano_df(results_df, x='log2FoldChange', y='padj', top=20)
 
 #%%
-
-
 #transcription factor inference 
 
 # Retrieve CollecTRI gene regulatory network
-mat = results_df[['stat']].T.rename(index={'stat': 'ARID1A-KO_treatment_vs_control'})
+mat = results_df[['stat']].T.rename(index={'stat': exp_name})
 
-# %%
+
 tf_acts, tf_pvals = dc.run_ulm(mat=mat, net=collectri, verbose=True)	\
 
 # Extract logFCs and pvals
-logFCs = results_df[['log2FoldChange']].T.rename(index={'log2FoldChange': 'ARID1A-KO_treatment_vs_control'})
-pvals = results_df[['padj']].T.rename(index={'padj': 'ARID1A-KO_treatment_vs_control'})
-dc.plot_barplot(tf_acts, 'ARID1A-KO_treatment_vs_control', top=25, vertical=True)
+logFCs = results_df[['log2FoldChange']].T.rename(index={'log2FoldChange': exp_name})
+pvals = results_df[['padj']].T.rename(index={'padj': exp_name})
+dc.plot_barplot(tf_acts, exp_name, top=25, vertical=True)
 
 # %%
 # Plot the specific targets
 
 dc.plot_targets(results_df, stat='stat', source_name='RFX5', net=collectri, top=15)
+dc.plot_targets(results_df, stat='stat', source_name='RFXAP', net=collectri, top=15)
+dc.plot_targets(results_df, stat='stat', source_name='CIITA', net=collectri, top=15)
+
 # %%
