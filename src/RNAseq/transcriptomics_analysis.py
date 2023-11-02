@@ -9,6 +9,7 @@ import pandas as pd
 from anndata import AnnData
 import os
 
+#%%
 
 
 # Retrieve CollecTRI gene regulatory network
@@ -21,6 +22,8 @@ adata = pd.read_csv(file_path)
 design = pd.read_csv(design_path)
 column_mapping = dict(zip(adata.columns[1:], design.set_index('Study_ID')['New_Sample_name']))
 adata.rename(columns=column_mapping, inplace=True)
+
+#%%
 
 # Retrieve gene symbols
 annot = sc.queries.biomart_annotations("hsapiens",
@@ -45,12 +48,14 @@ adata.columns = adata.columns.str.replace('__', ' ')
 adata = adata.drop(columns='ENSEMBL_ID')
 
 # Transform to AnnData object
-adata = adata.T.head()
+adata = adata.T
 # Remove columns with NaN column names
 adata = adata.loc[:, ~adata.columns.isna()]
 
 adata = AnnData(adata, dtype=np.float32)
 adata.var_names_make_unique()
+#%%
+
 
 #Inside an AnnData object, there is the .obs attribute where we can store the metadata of our samples.
 
@@ -106,11 +111,16 @@ dc.plot_volcano_df(results_df, x='log2FoldChange', y='padj', top=20)
 # Retrieve CollecTRI gene regulatory network
 mat = results_df[['stat']].T.rename(index={'stat': 'ARID1A-KO_treatment_vs_control'})
 
-collectri
-
 # %%
 tf_acts, tf_pvals = dc.run_ulm(mat=mat, net=collectri, verbose=True)	\
 
 # Extract logFCs and pvals
-logFCs = results_df[['log2FoldChange']].T.rename(index={'log2FoldChange': 'treatment.vs.control'})
-pvals = results_df[['padj']].T.rename(index={'padj': 'treatment.vs.control'})
+logFCs = results_df[['log2FoldChange']].T.rename(index={'log2FoldChange': 'ARID1A-KO_treatment_vs_control'})
+pvals = results_df[['padj']].T.rename(index={'padj': 'ARID1A-KO_treatment_vs_control'})
+dc.plot_barplot(tf_acts, 'ARID1A-KO_treatment_vs_control', top=25, vertical=True)
+
+# %%
+# Plot the specific targets
+
+dc.plot_targets(results_df, stat='stat', source_name='RFX5', net=collectri, top=15)
+# %%
