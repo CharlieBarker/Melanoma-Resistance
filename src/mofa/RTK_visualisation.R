@@ -3,6 +3,8 @@ setwd(home_dir)
 
 library(pathview)
 library(MOFA2)
+library(tidyr)
+library(ggplot2)
 
 ###enrichment of the weights #### 
 MOFAobject.trained<-load_model(file = "./results/mofa/mofa_object.hdf5")
@@ -12,6 +14,8 @@ weights <- get_weights(MOFAobject.trained,
                        as.data.frame = TRUE 
 )
 
+replacement_Vec<-c("Untreated","Vermurafenib_1uM","Trametinib_10nM","vemurafenib_and_trametinib")
+names(replacement_Vec)<- c("Untreated", "Vemurafenib", "Trametinib", "Combination")
 
 list_of_inputs<-list(#signalome_view=data.frame(read.csv("input_data/signalome_by_sample.csv")),
   phospho=data.frame(read.csv("./data/input_data/phosphosites.csv"))
@@ -36,11 +40,14 @@ RTKs<-c("IGF1R",
         "FLT1",
         "FGFR2", "FGF1", "FGFR1", "FGF2",
         "CD44", 
-        "INSR")
+        "INSR",
+        "MMP1")
 neg_feedback<-c("DUSP1", "DUSP2", "DUSP4")
+#for interest
+for_interest<-c("MMP1", "HLA.DRB1")
 
 
-rtk_mrna<-reshape2::melt(list_of_inputs$mRNA[list_of_inputs$mRNA$X %in% RTKs,])
+rtk_mrna<-reshape2::melt(list_of_inputs$mRNA[list_of_inputs$mRNA$X %in% for_interest,])
 rtk_mrna$variable<-sub("*\\.[0-9]", "", rtk_mrna$variable)
 rtk_mrna <- rtk_mrna |>
   separate_wider_delim(variable, delim = "__", names = c("drug", "ko"))
