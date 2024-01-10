@@ -124,6 +124,9 @@ tf_acts, tf_pvals = dc.run_ulm(mat=mat, net=collectri, verbose=True)	\
 logFCs = results_df[['log2FoldChange']].T.rename(index={'log2FoldChange': exp_name})
 pvals = results_df[['padj']].T.rename(index={'padj': exp_name})
 dc.plot_barplot(tf_acts, exp_name, top=25, vertical=True)
+# Write tf_acts to a CSV file
+tf_acts.T.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics/tf_activity/arid1a_tf_acts.csv')
+tf_pvals.T.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics/tf_activity/arid1a_tf_pval.csv')
 
 # %%
 # Plot the specific targets

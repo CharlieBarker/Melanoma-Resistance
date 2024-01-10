@@ -38,11 +38,16 @@ KDE <- "0.5"
 factorS <- c("Factor1", "Factor2", "Factor3")
 results_dir <- "./results/phuego/results/"
 factor_graphs<-list()
+
+#provisionally we need to find a way to make the phuego networks directed. 
+
 for (factor in factorS) {
   file_graphml_up<-paste0(results_dir, factor, "/increased/KDE_", KDE, "/networks/KDE.graphml")
   file_graphml_down<-paste0(results_dir, factor, "/decreased/KDE_", KDE, "/networks/KDE.graphml")
   factor_graphs[[factor]][["up"]]<-read_graph(file=file_graphml_up,format = "graphml")
   factor_graphs[[factor]][["down"]]<-read_graph(file=file_graphml_down,format = "graphml")
+  E(factor_graphs[[factor]][["up"]])$source <- "phuego"
+  E(factor_graphs[[factor]][["down"]])$source <- "phuego"
 }
 
 #get tf activities 
@@ -79,24 +84,13 @@ graph_tf <- graph_from_data_frame(data.frame(source=ppi_tf_expanded$source,
 E(graph_tf)$is_directed <- ppi_tf_expanded$is_directed
 E(graph_tf)$is_stimulation <- ppi_tf_expanded$is_stimulation
 E(graph_tf)$is_inhibition <- ppi_tf_expanded$is_inhibition
-E(graph_tf)$consensus_direction <- ppi_tf_expanded$consensus_direction
+E(graph_tf)$curation_effort <- ppi_tf_expanded$curation_effort
+E(graph_tf)$source <- "omnipath_tf_network"
 
 tf_name<-AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = unique(ppi_tf_expanded$target), keytype = "UNIPROTID", columns = "GENENAME")
 expan_tf_name<-AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = unique(ppi_tf_expanded$source), keytype = "UNIPROTID", columns = "GENENAME")
 expan_tf<-unique(c(expan_tf_name$GENENAME, tf_name$GENENAME))
 
-# ggplot(data = arid1a_tf, aes(x = Activity, y = -log10(P_val), col = diffexpressed, label = TF)) +
-#   geom_vline(xintercept = c(-0.6, 0.6), col = "gray", linetype = 'dashed') +
-#   geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') +
-#   geom_point(size = 2) +
-#   scale_color_manual(values = c("#00AFBB", "grey", "#bb0c00"), # to set the colours of our variable
-#                      labels = c("Downregulated", "Not significant", "Upregulated")) + # to set the labels in case we want to overwrite the categories from the dataframe (UP, DOWN, NO)
-#   labs(color = 'Severe', #legend_title,
-#        x = expression("log"[2]*"FC"), y = expression("-log"[10]*"p-value")) +
-#   scale_x_continuous(breaks = seq(-10, 10, 2)) + # to customise the breaks in the x axis
-#   ggtitle('TF-activity in ARID1A KO vs WT cells') + # Plot title
-#   geom_text_repel(max.overlaps = Inf)+ # To show all labels
-#   cowplot::theme_cowplot()
 
 get_nodes<-function(igraph_object){
   nodes<-V(igraph_object)$name
@@ -109,6 +103,7 @@ get_nodes<-function(igraph_object){
 join_tfs <- function(graph, tf_graph) {
   reg_graph_union <- igraph::union(graph, tf_graph)
   largest_contiguous_subgraph <- largest_component(reg_graph_union)
+  E(largest_contiguous_subgraph)$capacity<-E(largest_contiguous_subgraph)$weight
   return(largest_contiguous_subgraph)
 }
 
@@ -120,6 +115,26 @@ factor_graphs <- lapply(factor_graphs, function(graph) {
 factor_nodes <- lapply(factor_graphs, function(sublist) {
   sapply(sublist, get_nodes)
 })
+#turn all graphs into genenames not uniprot ids
+turn_to_genenames<-function(igraph_object){
+  nodes <- V(igraph_object)$name
+  genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = nodes, 
+                                       keytype = "UNIPROTID", 
+                                       columns = "GENENAME")
+  genename_df <- genename_df[!duplicated(genename_df[, "UNIPROTID"]), ]
+  
+  # Match the names based on UNIPROTID
+  name_mapping <- setNames(genename_df$GENENAME, genename_df$UNIPROTID)
+  
+  # Update vertex names using the name_mapping
+  V(igraph_object)$name <- name_mapping[V(igraph_object)$name]
+  
+  return(igraph_object)
+}
+factor_graphs<-lapply(factor_graphs, function(graph) {
+  sapply(graph, turn_to_genenames)
+})
+
 
 #get receptors or ligands as the starting points in the maximum flow. 
 
@@ -146,18 +161,8 @@ receptors <-
   unique %T>%
   length
 
-vennList<-list()
-for (factor in factorS) {
-  nodes<-factor_nodes[[factor]]
-  nodes$starting_points<-unique(c(receptors, ligands))
-  nodes$end_points<-expan_tf
-  # Default plot
-  vennPlot<-ggVennDiagram(nodes)
-  vennList[[factor]]<-vennPlot
-}
-
 # Convert nested list to data frame with the factor weight from mofa
-add_mofa_weight <- function(nodes,weights, factor) {
+add_mofa_weight <- function(nodes,weights, factor, abs=T) {
   df_out<-data.frame(
     Node = nodes,
     stringsAsFactors = FALSE,
@@ -167,11 +172,12 @@ add_mofa_weight <- function(nodes,weights, factor) {
   )
   df_out<-merge(x=df_out,y=weights,
             by.x=c("Node", "Factor"), by.y=c("node", "factor"))
-  return(df_out)
+  df_out$meta_node <- ifelse(df_out$tf == TRUE, "sink", ifelse(df_out$receptor_ligands == TRUE, "source", NA))
+  if (abs) {
+    df_out$value <- abs(df_out$value)
+  }
+  return(df_out[!is.na(df_out$meta_node),])
 }
-
-#add the sink (transcription factors) and source (receptor and ligands) nodes 
-
 #get nodes from all graphs
 sink_source_egdeList<-list()
 for (factor in factorS) {
@@ -182,4 +188,62 @@ for (factor in factorS) {
 }
 
 
+#function that makes a source and sink node and weights them based on their factor in arid1a, or TF activity. 
+make_source_sink_graph<-function(df,
+                                 tf_activity_df){
 
+  # Create an empty graph
+  g_source_sink <- make_empty_graph()
+  # Add source and sink nodes
+  g_source_sink <- add_vertices(g_source_sink, name = c("source", "sink"), nv = 2,
+                                attr=list(nodeType=c("meta","meta")))
+  #add tfs 
+  tf_list<-unique(df$Node[df$tf])
+  tf_df<-tf_activity_df[tf_activity_df$label %in% tf_list,]
+  tf_df$capacity <- abs(tf_df$Activity) / sum(abs(tf_df$Activity))
+  g_source_sink <- add_vertices(g_source_sink, name = tf_list, nv = length(tf_list),
+                                attr=list(nodeType=rep("tf", length(tf_list))))
+  #..and receptors
+  receptors_list<-unique(df$Node[df$receptor_ligands])
+  receptors_df<-df[df$Node %in% receptors_list,]
+  receptors_df$capacity <- receptors_df$value / sum(receptors_df$value)
+  g_source_sink <- add_vertices(g_source_sink, name = receptors_list, nv = length(receptors_list),
+                                attr=list(nodeType=rep("receptors", length(receptors_list))))
+  
+  
+  # Add edges from TFs to "sink"
+  for (tfs in tf_list) {
+    g_source_sink <- add_edges(g_source_sink, edges = c(tfs, "sink"),
+                               attr = list(capacity=sum(tf_df$capacity[tf_df$Node==tfs])))
+  }
+  
+  # Add edges from "source" to receptors
+  for (receptor in receptors_list) {
+    g_source_sink <- add_edges(g_source_sink, edges = c("source", receptor),
+                               attr = list(capacity=sum(receptors_df$capacity[receptors_df$Node==receptor])))
+  }
+  
+  # Plot the graph
+  return(g_source_sink)
+}
+
+#make source and sink graphs and then merge them with the graphs derived from phuego. 
+# add the sink (transcription factors) and source (receptor and ligands) nodes 
+
+max_flow_graphs<-list()
+for (factor in factorS) {
+  df_in<-sink_source_egdeList[[factor]]
+  phuego_graphs<-factor_graphs[[factor]]
+  
+  source_sink_up  <- make_source_sink_graph(df_in$up, tf_activity_df = arid1a_tf)
+  source_sink_down  <- make_source_sink_graph(df_in$down, tf_activity_df = arid1a_tf)
+  
+  union_graph_up <- igraph::union(phuego_graphs$up, source_sink_up)
+  union_graph_down <- igraph::union(phuego_graphs$down, source_sink_down)
+
+}
+#min max scaling of edgeweights from phuego and from omnipath
+# Min-Max Scaling function of tf activities, rtk factors, omnipath confidence and phuego weights
+min_max_scale <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
