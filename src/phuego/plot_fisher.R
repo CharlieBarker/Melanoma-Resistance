@@ -10,6 +10,10 @@ if (file.exists(packLib)) {
 
 library(dplyr)
 library(tidyr)
+library(viridis)
+library(ggplot2)
+library(wesanderson)
+library(ggpubr)
 
 read.fisher<-function(file){
   
@@ -68,15 +72,59 @@ fisher_df <- fisher_df |>
   separate_wider_delim(column_label, delim = "/", names = c("Factor", "Sign"))
 fisher_df$log10p = -log10(fisher_df$adjusted_p)
 
-
-fig_out<-ggplot(fisher_df, aes(x=Sign, y = reorder(Description, -log10p), color = log10p, size = -log10(adjusted_p))) +
+generate_factor_plot <- function(factor_df) {
+  factor_df %>%
+    ggplot(aes(x = Sign, y = reorder(Description, -log10p), color = log10p, size = -log10(adjusted_p))) +
     geom_point() +
     scale_color_viridis_c(name = 'Combined.Score') +
     cowplot::theme_cowplot() +
-    theme(axis.line  = element_blank()) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    theme(
+      axis.line = element_blank(),
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = rel(1)),
+      axis.text.y = element_text(size = rel(.9)),
+      axis.ticks = element_blank(),
+      panel.border = element_rect(colour = "black", fill = NA, size = 2)
+    ) +
     ylab('') +
-    theme(axis.ticks = element_blank())  +
-    theme(axis.ticks = element_blank(),
-          panel.border = element_rect(colour = "black", fill=NA, size=2)) +
-    scale_shape_manual(values=c(1,16) ) + facet_grid(~Factor)
+    scale_shape_manual(values = c(1, 16)) +
+    scale_fill_continuous(guide = guide_legend())+ 
+    grids(linetype = "dashed") +
+    scale_color_gradientn(colours = pal)+
+    labs(
+      x = "Sign",
+      y = "Description",
+      color = "-log10(FDR - P value)",
+      size = "-log10(FDR - P value)"
+    )
+}
+
+pal <- wes_palette("Zissou1", 100, type = "continuous")
+
+Factor1 <- fisher_df %>%
+  filter(Factor == "Factor1") %>%
+  arrange(adjusted_p) %>%
+  slice_head(n = 20) %>%
+  generate_factor_plot()
+
+Factor2 <- fisher_df %>%
+  filter(Factor == "Factor2") %>%
+  arrange(adjusted_p) %>%
+  slice_head(n = 20) %>%
+  generate_factor_plot()
+
+Factor3 <- fisher_df %>%
+  filter(Factor == "Factor3") %>%
+  arrange(adjusted_p) %>%
+  slice_head(n = 20) %>%
+  generate_factor_plot()
+
+
+output_file<-"./paper/plots/phuego/rwr_enrichment.pdf"
+pdf(# The directory you want to save the file in
+  width = 8, # The width of the plot in inches
+  height = 9,
+  file = output_file)
+Factor1
+Factor2
+Factor3
+dev.off()
