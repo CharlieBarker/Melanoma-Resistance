@@ -19,6 +19,12 @@ library(OmnipathR)
 library(magrittr)
 library(dplyr)
 library(tidyr)
+library(ggpubr)
+
+#globally improtant variables
+
+Abs<-F #are we looking at up and down regulation seperately?
+
 
 
 readr::local_edition(1) 
@@ -174,7 +180,10 @@ receptors <-
   length
 
 # Convert nested list to data frame with the factor weight from mofa
-add_mofa_weight <- function(nodes,weights, factor, abs=T) {
+add_mofa_weight <- function(nodes,
+                            weights, 
+                            factor, 
+                            Abs=T) {
   df_out<-data.frame(
     Node = nodes,
     stringsAsFactors = FALSE,
@@ -185,24 +194,26 @@ add_mofa_weight <- function(nodes,weights, factor, abs=T) {
   df_out<-merge(x=df_out,y=weights,
             by.x=c("Node", "Factor"), by.y=c("node", "factor"))
   df_out$meta_node <- ifelse(df_out$tf == TRUE, "sink", ifelse(df_out$receptor_ligands == TRUE, "source", NA))
-  if (abs) {
+  if (Abs) {
     df_out$value <- abs(df_out$value)
   }
   return(df_out[!is.na(df_out$meta_node),])
 }
+
 #get nodes from all graphs
 sink_source_egdeList<-list()
 for (factor in factorS) {
   out<-list()
-  out$up<-add_mofa_weight(factor_nodes[[factor]]$up, weights, factor)
-  out$down<-add_mofa_weight(factor_nodes[[factor]]$down, weights, factor)
+  out$up<-add_mofa_weight(factor_nodes[[factor]]$up, weights, factor, Abs = Abs)
+  out$down<-add_mofa_weight(factor_nodes[[factor]]$down, weights, factor, Abs = Abs)
   sink_source_egdeList[[factor]]<-out
 }
 
 
 #function that makes a source and sink node and weights them based on their factor in arid1a, or TF activity. 
 make_source_sink_graph<-function(df,
-                                 tf_activity_df){
+                                 tf_activity_df,
+                                 Abs=T){
 
   # Create an empty graph
   g_source_sink <- make_empty_graph()
@@ -211,9 +222,6 @@ make_source_sink_graph<-function(df,
                                 attr=list(nodeType=c("meta","meta")))
   #add tfs 
   tf_list<-unique(df$Node[df$tf])
-  tf_df<-tf_activity_df[tf_activity_df$label %in% tf_list,]
-  #absolute values.
-  tf_df$capacity <- abs(tf_df$Activity) / sum(abs(tf_df$Activity))
   g_source_sink <- add_vertices(g_source_sink, name = tf_list, nv = length(tf_list),
                                 attr=list(nodeType=rep("tf", length(tf_list))))
   #..and receptors
@@ -223,19 +231,25 @@ make_source_sink_graph<-function(df,
   g_source_sink <- add_vertices(g_source_sink, name = receptors_list, nv = length(receptors_list),
                                 attr=list(nodeType=rep("receptors", length(receptors_list))))
   
-  
+  tf_df<-tf_activity_df[tf_activity_df$label %in% tf_list,]
+  #absolute values.
+  if(Abs){
+    tf_df$capacity <- abs(tf_df$Activity)
+  }else{
+    tf_df$capacity <- tf_df$Activity
+  }
   # Add edges from TFs to "sink"
   for (tfs in tf_list) {
     g_source_sink <- add_edges(g_source_sink, edges = c(tfs, "sink"),
-                               attr = list(capacity=sum(tf_df$capacity[tf_df$TF==tfs])*10))
+                               attr = list(capacity=sum(tf_df$capacity[tf_df$TF==tfs])*10,
+                                           source="dummy"))
   }
-  
   # Add edges from "source" to receptors
   for (receptor in receptors_list) {
     g_source_sink <- add_edges(g_source_sink, edges = c("source", receptor),
-                               attr = list(capacity=sum(receptors_df$capacity[receptors_df$Node==receptor])))
+                               attr = list(capacity=sum(receptors_df$capacity[receptors_df$Node==receptor]),
+                                           source="dummy"))
   }
-  
   # Plot the graph
   return(g_source_sink)
 }
@@ -245,7 +259,6 @@ make_source_sink_graph<-function(df,
 
 
 union2<-function(g1, g2){
-  
   #Internal function that cleans the names of a given attribute
   CleanNames <- function(g, target){
     #get target names
@@ -254,11 +267,9 @@ union2<-function(g1, g2){
     AttrNeedsCleaning <- grepl("(_\\d)$", gNames )
     #remove the _x ending
     StemName <- gsub("(_\\d)$", "", gNames)
-    
     NewnNames <- unique(StemName[AttrNeedsCleaning])
     #replace attribute name for all attributes
     for( i in NewnNames){
-      
       attr1 <- parse(text = (paste0(target,"_attr(g,'", paste0(i, "_1"),"')"))) %>% eval
       attr2 <- parse(text = (paste0(target,"_attr(g,'", paste0(i, "_2"),"')"))) %>% eval
       
@@ -269,27 +280,23 @@ union2<-function(g1, g2){
       g <- parse(text = (paste0("delete_",target,"_attr(g,'", paste0(i, "_2"),"')"))) %>% eval
       
     }
-    
     return(g)
   }
-  
-  
   g <- igraph::union(g1, g2) 
   #loop through each attribute type in the graph and clean
   for(i in c("graph", "edge", "vertex")){
     g <- CleanNames(g, i)
   }
-  
   return(g)
-  
 }
+
 max_flow_graphs<-list()
 for (factor in factorS) {
   df_in<-sink_source_egdeList[[factor]]
   phuego_graphs<-factor_graphs[[factor]]
   
-  source_sink_up  <- make_source_sink_graph(df_in$up, tf_activity_df = arid1a_tf)
-  source_sink_down  <- make_source_sink_graph(df_in$down, tf_activity_df = arid1a_tf)
+  source_sink_up  <- make_source_sink_graph(df_in$up, tf_activity_df = arid1a_tf, Abs = Abs)
+  source_sink_down  <- make_source_sink_graph(df_in$down, tf_activity_df = arid1a_tf, Abs = Abs)
   
   union_graph_up <- union2(phuego_graphs$up, source_sink_up)
   union_graph_down <- union2(phuego_graphs$down, source_sink_down)
@@ -297,55 +304,89 @@ for (factor in factorS) {
   max_flow_graphs[[factor]]$down <- union_graph_down
 }
 
-plot(induced.subgraph(max_flow_graphs$Factor1$up, 
-                      vids = unlist(ego(max_flow_graphs$Factor1$up, nodes = "CREBBP"))))
-
-#min max scaling of edgeweights from phuego and from omnipath
-# Min-Max Scaling function of tf activities, rtk factors, omnipath confidence and phuego weights
-min_max_scale <- function(x) {
-  (x - min(x)) / (max(x) - min(x))
+# Function to calculate max flow
+calculate_max_flow <- function(graph, source_name, sink_name,
+                               mode="absolute") {
+  source_node <- which(V(graph)$name == source_name)
+  sink_node <- which(V(graph)$name == sink_name)
+  if(mode=="absolute"){
+    max_flow_result <- max_flow(graph, source = source_node, target = sink_node)
+  }
+  if(mode=="directed"){
+    graph_up_reg<-graph
+    graph_down_reg<-graph
+    sink_source_capacities_up<-E(graph)$capacity[is.na(E(graph)$source)]
+    sink_source_capacities_down<-E(graph)$capacity[is.na(E(graph)$source)]
+    
+    sink_source_capacities_up[sink_source_capacities_up < 0] <- 0
+    sink_source_capacities_down[sink_source_capacities_down > 0] <- 0
+    sink_source_capacities_down<-abs(sink_source_capacities_down)
+    
+    E(graph_up_reg)$capacity[is.na(E(graph_up_reg)$source)]<-sink_source_capacities_up
+    E(graph_down_reg)$capacity[is.na(E(graph_down_reg)$source)]<-sink_source_capacities_down
+    
+    max_flow_result_up <- max_flow(graph_up_reg, source = source_node, target = sink_node)
+    max_flow_result_down <- max_flow(graph_down_reg, source = source_node, target = sink_node)
+    max_flow_result<-list(up_reg=max_flow_result_up, down_reg=max_flow_result_down)
+  }
+  return(max_flow_result)
 }
 
-max_flow_out<-list()
+# Function to create DataFrame from graph and max flow result
+create_df_from_graph <- function(graph, max_flow_result, factor, direction,
+                                 mode="absolute") {
+  df_graph <- igraph::as_data_frame(graph)
+  if(mode=="absolute"){
+    df_graph$flow <- max_flow_result$flow
+  }
+  if(mode=="directed"){
+    df_graph_increased<-df_graph
+    df_graph_increased$flow <- max_flow_result$up_reg$flow
+    df_graph_increased$regulation <- "ARID1A KO, Increased signalling"
+    
+    df_graph_decreased<-df_graph
+    df_graph_decreased$flow <- max_flow_result$down_reg$flow
+    df_graph_decreased$regulation <- "ARID1A KO, Decreased signalling"
+    df_graph <- rbind(df_graph_increased, df_graph_decreased)
+  }
+  df_graph$factor <- factor
+  df_graph$Up_or_Down <- direction
+  return(df_graph)
+}
+
+# Main loop
+max_flow_out <- list()
+max_flow_out_df <- list()
+
 for (factor in factorS) {
-  flow_graphs<-max_flow_graphs[[factor]]
-  #transfer confidence of node - tf activity as a number for capacity 
-  #code code
+  flow_graphs <- max_flow_graphs[[factor]]
+  
   E(flow_graphs$down)$capacity[!is.na(E(flow_graphs$down)$n_ref)]<-1
   E(flow_graphs$up)$capacity[!is.na(E(flow_graphs$up)$n_ref)]<-1
   
-  #min max scale the capacities so that they are comparing - or not we want our pheugo network to be the limiting factor.
-  out_up<-max_flow(flow_graphs$up,
-                source = which(V(flow_graphs$up)$name=="source"),
-                target = which(V(flow_graphs$up)$name=="sink"))
-  out_down<-max_flow(flow_graphs$down,
-                source = which(V(flow_graphs$down)$name=="source"),
-                target = which(V(flow_graphs$down)$name=="sink"))
-  max_flow_out[[factor]]$up <- out_up
-  max_flow_out[[factor]]$down <- out_down
+  # Calculate max flow for 'up' graph
+  out_up <- calculate_max_flow(flow_graphs$up, "source", "sink", mode = "directed")
+
+  # Create DataFrame for 'up' graph
+  df_graph_up <- create_df_from_graph(flow_graphs$up, out_up, factor, "up", mode = "directed")
+  
+  # Calculate max flow for 'down' graph
+  out_down <- calculate_max_flow(flow_graphs$down, "source", "sink", mode = "directed")
+
+  # Create DataFrame for 'down' graph
+  df_graph_down <- create_df_from_graph(flow_graphs$down, out_down, factor, "down", mode = "directed")
+  
+  # Combine DataFrames
+  max_flow_out_df[[factor]] <- rbind(df_graph_up, df_graph_down)
 }
+
+full_max_flow_out_df<-bind_rows(max_flow_out_df)
+
 
 
 
 
 #visualisation 
-
-
-
-
-
-graph_in<-max_flow_graphs$Factor3$up
-flow_in<-max_flow_out$Factor3$up$flow
-
-e_ids<-E(graph_in)[flow_in != 0]
-vertices <- unique(c(ends(graph_in, e = e_ids)[,1], ends(graph_in, e = e_ids)[,2]))
-graph_out <- subgraph(graph_in, vids = vertices)
-
-ggraph(graph_out,layout = "stress")+
-  geom_edge_link0(width = 0.2,colour = "grey")+
-  geom_node_point(color = "black",size = 0.3)+
-  theme_graph()
-
 
 library(ggraph)
 #> Loading required package: ggplot2
@@ -357,12 +398,41 @@ library(tidygraph)
 #>     filter
 
 # Create graph of highschool friendships
-graph <- as_tbl_graph(highschool) |> 
-  mutate(Popularity = centrality_degree(mode = 'in'))
 
+
+# Assuming 'full_max_flow_out_df' is your data frame
+
+
+
+to_plot_df <- full_max_flow_out_df %>%
+  filter(flow != 0) %>%
+  filter(factor == "Factor1")
+to_plot_df$weight<-NULL
+graph <- as_tbl_graph(to_plot_df) |> 
+  mutate(Centrality = centrality_degree(mode = 'in'))
 # plot using ggraph
-ggraph(graph, layout = 'kk') + 
-  geom_edge_fan(aes(alpha = after_stat(index)), show.legend = FALSE) + 
-  geom_node_point(aes(size = Popularity)) + 
-  facet_edges(~year) + 
-  theme_graph(foreground = 'steelblue', fg_text_colour = 'white')
+graph_Factor1<-ggraph(graph, layout = 'kk') + 
+  geom_edge_link(aes(colour = factor(regulation))) + 
+  geom_edge_fan(aes(alpha = flow), show.legend = FALSE) + 
+  geom_node_point(aes(size = Centrality)) + 
+  facet_edges(~regulation) + 
+  theme_graph(foreground = 'darkgrey', fg_text_colour = 'white') + 
+  geom_node_text(aes(label = name), color = 'grey', 
+                 size = 3)
+
+to_plot_df <- full_max_flow_out_df %>%
+  filter(flow != 0) %>%
+  filter(factor == "Factor3")
+to_plot_df$weight<-NULL
+graph <- as_tbl_graph(to_plot_df) |> 
+  mutate(Centrality = centrality_degree(mode = 'in'))
+# plot using ggraph
+graph_Factor2<-ggraph(graph, layout = 'kk') + 
+  geom_edge_link(aes(colour = factor(regulation))) + 
+  geom_edge_fan(aes(alpha = flow), show.legend = FALSE) + 
+  geom_node_point(aes(size = Centrality)) + 
+  facet_edges(~regulation) + 
+  theme_graph(foreground = 'darkgrey', fg_text_colour = 'white') + 
+  geom_node_text(aes(label = name), color = 'grey', 
+                 size = 3)
+ggarrange(graph_Factor1, graph_Factor2, ncol = 1, nrow = 2)
