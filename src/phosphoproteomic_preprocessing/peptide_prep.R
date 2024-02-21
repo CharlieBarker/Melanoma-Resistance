@@ -90,4 +90,4 @@ data_combat <-  data_combat[apply(data_combat, 1, function(x) all(x >= 0)), ]
 
 
 ####WRITE RESULTS####
-write.csv(data_combat, file = "./data/proteomic/processed/combat_peptide.csv")
+#write.csv(data_combat, file = "./data/proteomic/processed/combat_peptide.csv")
