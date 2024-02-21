@@ -121,7 +121,7 @@ Factor3 <- fisher_df %>%
 
 output_file<-"./paper/plots/phuego/rwr_enrichment.pdf"
 pdf(# The directory you want to save the file in
-  width = 8, # The width of the plot in inches
+  width = 12, # The width of the plot in inches
   height = 9,
   file = output_file)
 Factor1

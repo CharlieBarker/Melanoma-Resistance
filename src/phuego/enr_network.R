@@ -156,7 +156,7 @@ filter_edges_by_quantile <- function(graph, quantile_value) {
 
 
 # Function to process a direction ("up" or "down")
-print_graph_to_cytoscape <- function(graph_data, direction, factor, sub_cat, msig_cat, n_pathways = 8, quantile_value=.25) {
+print_graph_to_cytoscape <- function(graph_data, direction, factor, sub_cat, msig_cat, n_pathways = 15, quantile_value=.5) {
   
   df.g <- graph.data.frame(d = graph_data[graph_data$direction == direction & graph_data$rank <= n_pathways, ], directed = FALSE)
   
@@ -191,7 +191,9 @@ for (factor in factorS) {
                                 direction="down",
                                 rank=c(1:length(df$down$ID))))
   enr_net_expanded<-tidyr::separate_rows(enr_network, source, sep="/")
-  enr_net_expanded$target<-str_remove_all(enr_net_expanded$target, pattern = "REACTOME_")
+  #remove the collection name from the node names
+  enr_net_expanded$target<-str_remove_all(enr_net_expanded$target, 
+                                          pattern = paste0(unlist(map(str_split(sub_cat, pattern = ":"),2)), "_"))
   # Process "up" direction
   enr_graphs[[factor]]$up <- print_graph_to_cytoscape(enr_net_expanded, "up", factor, sub_cat, msig_cat)
   
