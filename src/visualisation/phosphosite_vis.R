@@ -51,7 +51,7 @@ split_exp_conditions<-function(df){
 phospho=data.frame(read.csv("data/input_data/phosphosites.csv"))
 
 ggplots_list<-list()
-for (protein_of_interest in c("VIM", "CD44", "CTTN", "TLK2")) {
+for (protein_of_interest in c("ATM", "TP53BP")) {
   together_plot<-reshape2::melt(phospho[grep(phospho$X, pattern = protein_of_interest),])
   phos_df<-split_exp_conditions(together_plot)
   phos_wt<-phos_df[phos_df$ko=="WT",]
@@ -64,15 +64,15 @@ phos_total<-phos_total[!phos_total$X %in% to_miss,]
 
 # Step 1: Call the pdf command to start the plot
 pdf(file = "~/Desktop/Melanoma_Resistance/results/vis/Factor1/phos_vis.pdf",   # The directory you want to save the file in
-    width = 10, # The width of the plot in inches
-    height = 4) # The height of the plot in inches
+    width = 6, # The width of the plot in inches
+    height = 6) # The height of the plot in inches
 
 # Step 2: Create the plot with R code
 ggplot(phos_total) +
   geom_bar(aes(x = drug, y = mean, fill = drug), stat = "identity", alpha = 0.5) +
   geom_errorbar(aes(x = drug, ymin = mean - ic, ymax = mean + ic), width = 0.4, colour = "orange", alpha = 0.9, size = 1.5) +
   cowplot::theme_cowplot() + 
-  facet_wrap(~X, nrow = 1) + 
+  facet_wrap(~X, nrow = 3) + 
   scale_fill_manual(values = drug_colors) +
   labs(y = "Phosphosite abundance") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +

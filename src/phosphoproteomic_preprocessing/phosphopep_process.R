@@ -71,6 +71,15 @@ names(seq_psite_list)<-uniq_psites
 sequence_to_psite<-lapply(seq_psite_list, function(x){paste(Reduce(union, sapply(x, strsplit, "")), collapse = "")})
 #very slight differences in the fragments - we should be doing this earlier -- really. 
 
+# Extract site sequences from the list, replace 'X' with the correct residue, and create a new dataframe
+SiteSequence = sapply(names(sequence_to_psite), function(x) {
+  parts <- strsplit(x, ";")[[1]]
+  protein <- parts[1]
+  residue <- parts[2]
+  fragment <- gsub("X", paste0(tolower(substr(residue, 1, 1)), "*"), sequence_to_psite[[x]])
+  fragment
+})
+
 
 prot_mapper<-data.frame(ID=unlist(map(str_split(unlist(map(str_split(string = rownames(to_study),
                                                                      pattern = "__"), 2)), pattern = "\\s"), 1)),

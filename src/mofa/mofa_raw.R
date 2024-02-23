@@ -103,9 +103,8 @@ facotrs_plot<-plot_factor(MOFAobject.trained,
                           factor = 1:3,
                           color_by = "Drug",
                           shape_by = "Genetic",
-                          scale = T
+                          scale = F
 )
-
 
 #WRITE PDFS
 
@@ -113,7 +112,12 @@ pdf(file = "results/mofa/visualisation/mofa_variance.pdf",width=6,height=10)
 data_overview_plot
 ggpubr::ggarrange(variance_heat, variance_per_view, nrow = 2,align = "hv") #density plots per batch
 dev.off()
-pdf(file = "results/mofa/visualisation/mofa_factors.pdf",width=7,height=2)
+pdf(file = "results/mofa/visualisation/mofa_factors.pdf",width=6,height=4)
 facotrs_plot
+dev.off()
+pdf(file = "results/mofa/visualisation/mofa_factors_info.pdf",width=4,height=4)
+plot_factor_cor(MOFAobject.trained, method = "spearman")
+plot_variance_explained(MOFAobject.trained)
+plot_variance_explained(MOFAobject.trained, plot_total = T)[[2]]
 dev.off()
 

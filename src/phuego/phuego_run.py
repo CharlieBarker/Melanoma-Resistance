@@ -10,7 +10,7 @@ test_dir = "/Users/charliebarker/Desktop/Melanoma_Resistance/results/mofa/mofa_f
 
 # When calling the functions, set your parameters here.
 fisher_geneset = ["B"]
-fisher_threshold = 0.05
+fisher_threshold = 0.1
 fisher_background = "intact"
 ini_pos = ["False"]
 ini_neg = ["False"]
