@@ -318,4 +318,5 @@ for (factor in factorS) {
   max_flow_graphs[[factor]]$down <- union_graph_down
 }
 
+save(max_flow_graphs, file = "./results/maxflow/max_flow_graphs.Rdata")
 
