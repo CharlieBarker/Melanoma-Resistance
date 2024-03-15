@@ -8,6 +8,8 @@ library(stringr)
 library(purrr)
 library(data.table)
 library(dplyr)
+
+gene_names
 rename_rows<-function(to_plot, edb){
   uniprot_accession<-unlist(map(str_split(sub(" .*", "", rownames(to_plot)), "__"), 2))
   frag_sequence<-unlist(map(str_split(sub(" .*", "", rownames(to_plot)), "__"), 1))
@@ -57,6 +59,7 @@ prepare_mofa_input<-function(input, is.phos=T){
 }
 
 mofa_protein<-prepare_mofa_input(proteins, is.phos = F)
+dim(mofa_protein)
 
 write.csv(log2(mofa_protein), file = "./data/input_data/proteins.csv")
 
