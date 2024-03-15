@@ -139,9 +139,29 @@ boxplot(log2(data_combat), notch = TRUE, col = rep(c("red", "green", "blue"), ea
 plotDensities(log2(data_combat), col = rep(c("red", "green", "blue"), 6), main = "ComBat data")
 #3D plot
 dat_pc<-t(data_combat)
-table(design$total[match(rownames(dat_pc), design_combat$code)])
+rownames(dat_pc) <- gsub("^X", "", rownames(dat_pc))
+drug_names<-design$Drug[match(rownames(dat_pc), design_combat$code)]
+knockout_names<-design$Genetic[match(rownames(dat_pc), design_combat$code)]
+
 
 pca <- prcomp(dat_pc, scale.=TRUE )
+mds_df<-data.frame(group=group,
+                   x=pca$x[,1], y=pca$x[,2], z=pca$x[,3])
+
+
+shapes = c(16, 17, 18, 19) 
+shapes <- shapes[as.numeric(as.factor(mds_df$drug))]
+colors <- ghibli_palettes$KikiMedium[2:5]
+colors <- as.character(colors[as.numeric(as.factor(mds_df$gene))])
+output_file<-"./paper/Supplementary_plots/3d_pca.pdf"
+
+library(plotly)
+library(dplyr)
+p <- plot_ly(mds_df, x=~x, y=~y, 
+             z=~z, color=~group) %>%
+  add_markers(size=1.5)
+print(p)
+
 
 #write end result 
 write.csv(x = data_combat,file = "./data/proteomic/processed/protein__norm_combat_imp.csv")

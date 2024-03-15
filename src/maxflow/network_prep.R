@@ -70,6 +70,8 @@ arid1a_tf_acts<-read.csv(file = "./results/transcriptomics/tf_activity/arid1a_tf
 arid1a_tf_pval<-read.csv(file = "./results/transcriptomics/tf_activity/arid1a_tf_pval.csv")
 arid1a_tf<-merge(arid1a_tf_acts,arid1a_tf_pval,by="X")
 colnames(arid1a_tf)<-c("TF", "Activity", "P_val")
+#arid1a_tf$P_val<-p.adjust(arid1a_tf$P_val)
+
 arid1a_tf$diffexpressed <- arid1a_tf$Activity < 0
 arid1a_tf$diffexpressed[arid1a_tf$P_val>0.1] <- "Not significant"
 arid1a_tf$diffexpressed [arid1a_tf$diffexpressed == T] <- "Downregulated"
@@ -77,6 +79,7 @@ arid1a_tf$diffexpressed [arid1a_tf$diffexpressed == F] <- "Upregulated"
 arid1a_tf$label<-arid1a_tf$TF
 arid1a_tf$TF[arid1a_tf$diffexpressed=="Not significant"]<- ""
 sig_tfs<-arid1a_tf[arid1a_tf$diffexpressed!="Not significant",]$TF
+
 ppi <- read.csv(file = "./data/omnipath.csv")
 
 #get incoming edges to sig tfs
