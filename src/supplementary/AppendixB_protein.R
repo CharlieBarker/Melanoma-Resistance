@@ -89,19 +89,19 @@ fontSize = 10
 
 # Change box plot colors by groups
 cv1<-ggplot(mRNA_csv, aes(y=CV, x=Sample, fill=Sample))+
-  geom_boxplot()+cowplot::theme_cowplot(font_size = fontSize) +
+  geom_violin()+cowplot::theme_cowplot(font_size = fontSize) +
   ylim(0, 100) + ggtitle("A.   Coefficient Of Variation for each mRNA transcript per sample (CVs)") + 
   labs(y = "CV (%)", x = "Samples") + 
   theme(axis.text.x = element_blank())+
   scale_fill_manual(values=sample_colour_scheme)
 cv2<-ggplot(protein_csv, aes(y=CV, x=Sample, fill=Sample))+
-  geom_boxplot()+cowplot::theme_cowplot(font_size = fontSize) +
+  geom_violin()+cowplot::theme_cowplot(font_size = fontSize) +
   ylim(0, 100) + ggtitle("B.   Coefficient Of Variation for each Protein per sample (CVs)") + 
   labs(y = "CV (%)", x = "Samples") + 
   theme(axis.text.x = element_blank())+
   scale_fill_manual(values=sample_colour_scheme)
 cv3<-ggplot(phospho_csv, aes(y=CV, x=Sample, fill=Sample))+
-  geom_boxplot()+cowplot::theme_cowplot(font_size = fontSize) +
+  geom_violin()+cowplot::theme_cowplot(font_size = fontSize) +
   ylim(0, 100) + ggtitle("C.   Coefficient Of Variation for each Phospho-peptide per sample (CVs)") + 
   labs(y = "CV (%)", x = "Samples") + 
   theme(axis.text.x = element_blank())+
