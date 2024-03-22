@@ -1,12 +1,15 @@
 home_dir<-"~/Desktop/Melanoma_Resistance/"
 setwd(home_dir)
 
+source("./src/functions/default_variables.R")
+
 library(pathview)
 library(MOFA2)
 library(tidyr)
 library(ggplot2)
 library(dplyr)
 library(ggpubr)
+
 
 ###enrichment of the weights #### 
 MOFAobject.trained<-load_model(file = "./results/mofa/mofa_object.hdf5")
@@ -15,9 +18,6 @@ weights <- get_weights(MOFAobject.trained,
                        views = "all", 
                        as.data.frame = TRUE 
 )
-
-replacement_Vec<-c("Untreated","Vermurafenib_1uM","Trametinib_10nM","vemurafenib_and_trametinib")
-names(replacement_Vec)<- c("Untreated", "Vemurafenib", "Trametinib", "Combination")
 
 list_of_inputs<-list(#signalome_view=data.frame(read.csv("input_data/signalome_by_sample.csv")),
   phospho=data.frame(read.csv("./data/input_data/phosphosites.csv"))

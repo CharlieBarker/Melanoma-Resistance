@@ -1,3 +1,29 @@
+
+#find correct environment 
+packLib="/usr/lib/R"
+if (file.exists(packLib)) {
+  reticulate::use_condaenv("py37", required = T)
+  setwd(dir = "~/Desktop/Melanoma_Resistance/")
+}else {
+  setwd(dir = "~/Desktop/Melanoma_Resistance/")
+}
+
+library(igraph)
+library(EnsDb.Hsapiens.v86)
+library("ggVennDiagram")
+library(stringr)
+library(purrr)
+library(ggrepel)
+library(OmnipathR)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(ggpubr)
+library(wesanderson)
+
+load("./results/maxflow/max_flow_graphs.Rdata")
+factorS <- c("Factor1", "Factor2", "Factor3")
+
 # Function to calculate max flow
 calculate_max_flow <- function(graph, source_name, sink_name,
                                mode="absolute") {

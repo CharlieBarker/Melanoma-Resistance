@@ -136,3 +136,18 @@ dc.plot_targets(results_df, stat='stat', source_name='RFXAP', net=collectri, top
 dc.plot_targets(results_df, stat='stat', source_name='CIITA', net=collectri, top=15)
 
 # %%
+
+dc.plot_network(
+    net=collectri,
+    obs=mat,
+    act=tf_acts,
+    n_sources=['RFX5', 'RFXAP', 'CIITA', 'EHF', "TWIST1"],
+    n_targets=15,
+    node_size=50,
+    figsize=(5, 5),
+    c_pos_w='darkgreen',
+    c_neg_w='darkred',
+    vcenter=True
+)
+
+# %%
