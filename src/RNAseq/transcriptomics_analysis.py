@@ -109,6 +109,8 @@ stat_res.lfc_shrink()
 
 # Extract results
 results_df = stat_res.results_df
+results_df.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics/arid1a_lfc.csv')
+
 dc.plot_volcano_df(results_df, x='log2FoldChange', y='padj', top=20)
 
 #%%
@@ -131,9 +133,10 @@ tf_pvals.T.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/tran
 # %%
 # Plot the specific targets
 
-dc.plot_targets(results_df, stat='stat', source_name='RFX5', net=collectri, top=15)
-dc.plot_targets(results_df, stat='stat', source_name='RFXAP', net=collectri, top=15)
-dc.plot_targets(results_df, stat='stat', source_name='CIITA', net=collectri, top=15)
+dc.plot_targets(results_df, stat='stat', source_name='RFX5', net=collectri, top=20)
+dc.plot_targets(results_df, stat='stat', source_name='RFXAP', net=collectri, top=20)
+dc.plot_targets(results_df, stat='stat', source_name='CIITA', net=collectri, top=20)
+dc.plot_targets(results_df, stat='stat', source_name='TWIST1', net=collectri, top=20)
 
 # %%
 

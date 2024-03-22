@@ -142,7 +142,11 @@ lfc_arid1a<-lapply(list_of_inputs, function(x){
                         replacement_Vec = replacement_Vec)
   return(lfc$top_table)
 })
+#print lfc for RNAseq ARID1A - so that we can generate figure 4
+# write.csv(x = lfc_arid1a$`mRNA RNAseq/transcriptomics`,
+#           file = "./results/transcriptomics/arid1a_lfc.csv")
 lfc_arid1a<-bind_rows(lfc_arid1a, .id = "column_label")
+
 
 #for COMBINATION
 lfc_combination<-lapply(list_of_inputs, function(x){
