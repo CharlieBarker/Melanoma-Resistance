@@ -66,14 +66,22 @@ adata.obs['combination'] = ['treatment' if 'and' in sample_id else 'control' for
 adata.obs['ARID1A_KO'] = ['treatment' if 'ARID1A_KO' in sample_id else 'control' for sample_id in adata.obs.index]
 
 #%%
-#Run DESEQ2
+#Filter genes by expression
 
 # Visualize metadata
 
-dc.plot_filter_by_expr(adata, group=None, min_count=10, min_total_count=15, large_n=1, min_prop=1)
+min_count = 5
+min_total_count = 10
+
+
+dc.plot_filter_by_expr(adata, group=None, min_count=min_count, min_total_count=min_total_count, large_n=1, min_prop=.4)
 
 # Obtain genes that pass the thresholds
-genes = dc.filter_by_expr(adata, group=None, min_count=10, min_total_count=15, large_n=1, min_prop=1)
+genes = dc.filter_by_expr(adata, group=None, min_count=min_count, min_total_count=min_total_count, large_n=1, min_prop=.4)
+
+
+#%%
+#Run DESEQ2
 
 # Filter by these genes
 adata = adata[:, genes].copy()
@@ -138,19 +146,3 @@ dc.plot_targets(results_df, stat='stat', source_name='RFXAP', net=collectri, top
 dc.plot_targets(results_df, stat='stat', source_name='CIITA', net=collectri, top=20)
 dc.plot_targets(results_df, stat='stat', source_name='TWIST1', net=collectri, top=20)
 
-# %%
-
-dc.plot_network(
-    net=collectri,
-    obs=mat,
-    act=tf_acts,
-    n_sources=['RFX5', 'RFXAP', 'CIITA', 'EHF', "TWIST1"],
-    n_targets=15,
-    node_size=50,
-    figsize=(5, 5),
-    c_pos_w='darkgreen',
-    c_neg_w='darkred',
-    vcenter=True
-)
-
-# %%
