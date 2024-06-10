@@ -129,7 +129,7 @@ for (factor in factorS) {
   
   # Merge up and down graphs for each factor
   combined_graph <- union2(up_graph, down_graph)
-  combined_graph <- up_graph
+  #combined_graph <- up_graph
   
   # Add the combined graph to the super graph
   super_graph <- union2(super_graph, combined_graph)
@@ -198,6 +198,22 @@ ggraph(largest_component_graph, layout = l ) +
   theme(legend.position = "none",
         plot.margin = unit(c(0,0,0,0), 'lines'))+ 
   scale_colour_manual(values=c("lightgrey", "#92bbd9ff"))
+
+
+conv_nodes<-data.frame(uniprt=V(largest_component_graph)$name,
+                       gene_name=V(largest_component_graph)$Gene_name)
+node_gene_name <- "PRKD1"
+node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
+
+ego_net <- make_ego_graph(largest_component_graph, order = 1, nodes = node)[[1]]
+ggraph(ego_net, layout = 'linear', circular = TRUE) + 
+  geom_edge_arc(start_cap = circle(3, 'mm'),
+                end_cap = circle(3, 'mm'), 
+                aes(alpha = weight^2)) + 
+  geom_node_point(size = 5) + 
+  coord_fixed()+theme_void()+
+  geom_node_label(aes(label = Gene_name, colour=direction), repel=FALSE) +
+  labs(title = paste0(node_gene_name, " ego net"))
 
 
 dev.off()
