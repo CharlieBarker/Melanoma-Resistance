@@ -171,12 +171,12 @@ ggplot(subset_results[!is.na(subset_results$centrality),],
   geom_hline(yintercept = 0, color = "darkgrey", linetype="dashed") + # Add horizontal line at y=0  
   geom_smooth(method = "lm", se = T, size = 1, color="darkgrey") + # Add a line of best fit using linear regression
   geom_point() + 
-  facet_wrap( ~ experiment) + 
+  facet_wrap( ~ experiment, ncol = 2) + 
   theme_cowplot() +
   geom_text_repel(aes(label = `Kinase Name`), colour = "black", size = 3, max.overlaps = 10) + # Apply label aesthetic here
   coord_cartesian(ylim = c(0, NA)) + # Set the lower limit of y-axis to 0
   stat_cor(method = "pearson", aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~")), label.x = 0, label.y = 1.5) # Add Pearson correlation coefficient
-ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 25, height = 12, units = "cm")
+ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 20, height = 20, units = "cm")
 
 
 
