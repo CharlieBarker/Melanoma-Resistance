@@ -101,26 +101,10 @@ complete_results$experiment <- gsub(".xlsx$", "", complete_results$experiment)
 complete_results$experiment <- factor(complete_results$experiment, levels = c("Vemurafenib vs Untreated", "Trametinib vs Untreated", "Combined vs Untreated",
                                                                             "Combined vs Vemurafenib", "Combined vs Trametinib"))
 
-drug_targets<-complete_results[complete_results$`Kinase Name` %in% c("ERK1", "BRAF"),]
+drug_targets<-complete_results[complete_results$`Kinase Name` %in% c("ERK1", "BRAF", "PKD1"),]
 drug_targets<-drug_targets[!grepl(drug_targets$experiment, pattern="ARID1A"),]
 pal <- wes_palette("Zissou1", 100, type = "continuous")
 
-# ggplot(drug_targets) +
-#   geom_bar(aes(x=`Kinase Name`, y=`Median Kinase Statistic`, fill=`Median Kinase Statistic`), stat="identity", alpha=0.7) +
-#   scale_fill_gradientn(colours = pal) + 
-#   geom_errorbar(aes(x=`Kinase Name`, 
-#                     ymin=`Median Kinase Statistic`-`SD Kinase Statitistic`, 
-#                     ymax=`Median Kinase Statistic`+`SD Kinase Statitistic`),
-#                 width=0.4, colour="orange", alpha=0.9, size=1.3) +
-#   facet_grid(arid1a_status ~ experiment) + 
-#   geom_hline(yintercept = 0, color = "darkgrey") + # Add horizontal line at y=0
-#   cowplot::theme_cowplot()+
-#   theme(panel.spacing = unit(.05, "lines"),
-#         panel.border = element_rect(color = "lightgrey", fill = NA, size = 1), 
-#         strip.background = element_rect(color = "lightgrey", size = 1,fill="lightgrey")
-#         )
-
-# Change baseline
 
 ggplot(drug_targets[!is.na(drug_targets$experiment),], aes(x=`Kinase Name`, y=`Median Kinase Statistic`, 
                          colour=`Median Kinase Statistic`)) +
