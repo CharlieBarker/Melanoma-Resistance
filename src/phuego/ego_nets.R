@@ -311,11 +311,11 @@ plot_raw_data_ego<-function(node_gene_name, #node which the ego is based on
     scale_fill_manual(values = drug_colors) +
     cowplot::theme_cowplot() +
     theme(
-      plot.title = element_text(size=11),
+      plot.title = element_text(size=18),
       axis.text.x = element_text(angle = 70, hjust = 1, size = rel(1)),
     ) +
     xlab("") +
-    facet_wrap(~name, scales = "free_y") + 
+    facet_wrap(~name) + 
     grids(linetype = "dashed")+
     labs(
       x = "Drug treatment",
@@ -335,6 +335,19 @@ plot_grid(centrality_plots,
           mapk1_ego, egfr_ego,IGF1R_ego,
           ncol = 2, align = "h", labels = "AUTO")
 
+node_gene_name <- "PRKD1"
+node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
+
+ego_net <- make_ego_graph(g, order = 1, nodes = node)[[1]]
+ggraph(ego_net, layout = 'linear', circular = TRUE) + 
+  geom_edge_arc(start_cap = circle(3, 'mm'),
+                end_cap = circle(3, 'mm'), 
+                aes(alpha = weight^2)) + 
+  geom_node_point(size = 5) + 
+  coord_fixed()+theme_void()+
+  geom_node_label(aes(label = Gene_name, colour=direction), repel=FALSE) +
+  labs(title = paste0(node_gene_name, " ego net"))
+
 
 
 plot_raw_data_ego(node_gene_name = "MAPK1", "protein")
@@ -346,4 +359,8 @@ plot_raw_data_ego(node_gene_name = "EGFR", "mRNA")
 
 plot_raw_data_ego(node_gene_name = "IGF1R", "protein")
 plot_raw_data_ego(node_gene_name = "IGF1R", "mRNA")
+
+
+plot_raw_data_ego(node_gene_name = "PRKD1", "protein")
+plot_raw_data_ego(node_gene_name = "PRKD1", "mRNA")
 dev.off()
