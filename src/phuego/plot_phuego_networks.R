@@ -118,7 +118,6 @@ union2<-function(g1, g2){
   }
   
   return(g)
-  
 }
 
 # Merge graphs into a super graph
@@ -186,5 +185,19 @@ facetted_graph <- ggraph(largest_component_graph, layout = l) +
   scale_colour_ghibli_d("YesterdayMedium", direction = -1)
 
 
+pdf("./paper/plots/phuego_facetted.pdf", width = 8, height = 6)
 ggarrange(big_graph, facetted_graph, ncol = 1, nrow = 2)
-ggsave("./paper/plots/phuego_facetted.pdf", width = 20, height = 15, units = "cm")
+
+V(largest_component_graph)$is_subgraph = V(largest_component_graph)$factor == "Factor 1 (Drug Agnostic)"
+
+ggraph(largest_component_graph, layout = l ) + 
+  geom_edge_link(alpha=0.3) + 
+  geom_node_point(aes(colour=is_subgraph)) +
+  coord_fixed() +
+  theme_graph(base_family = "sans",base_size = 12)+  
+  theme(legend.position = "none",
+        plot.margin = unit(c(0,0,0,0), 'lines'))+ 
+  scale_colour_manual(values=c("lightgrey", "#92bbd9ff"))
+
+
+dev.off()
