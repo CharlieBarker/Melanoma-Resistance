@@ -55,6 +55,7 @@ KDE <- "0.5"
 factorS <- c("Factor1", "Factor2", "Factor3")
 results_dir <- "./results/phuego/results/"
 factor_graphs <- list()
+factor_genes_names <- list()
 
 factor_to_vis<-"Factor1"
 
@@ -65,11 +66,12 @@ for (factor in factorS) {
   
   factor_graphs[[factor]][["up"]] <- read_graph(file = file_graphml_up, format = "graphml")
   factor_graphs[[factor]][["down"]] <- read_graph(file = file_graphml_down, format = "graphml")
-  
+
   for (direction in c("up", "down")) {
     V(factor_graphs[[factor]][[direction]])$source <- "phuego"
     V(factor_graphs[[factor]][[direction]])$direction <- direction
     V(factor_graphs[[factor]][[direction]])$factor <- factor
+    factor_genes_names[[factor]][[direction]] <- V(factor_graphs[[factor]][[direction]])$Gene_name
     
     # Ensure the graph is directed
     if (!is.directed(factor_graphs[[factor]][[direction]])) {
@@ -77,6 +79,9 @@ for (factor in factorS) {
     }
   }
 }
+
+factor_genes_names_df<-lapply(factor_genes_names, stack)
+factor_genes_names_df <- bind_rows(factor_genes_names_df, .id = "factor")
 
 # factor_graphs
 
@@ -178,7 +183,8 @@ union2<-function(g1, g2){
   
   g <- igraph::union(g1, g2) 
   V(g)$consensus_direction <- paste0(V(g)$direction_1, "__", V(g)$direction_2)
-
+  V(g)$consensus_factor <- paste0(V(g)$factor_1, "__", V(g)$factor_2, "__", V(g)$factor_3)
+  
   #loop through each attribute type in the graph and clean
   for(i in c("graph", "edge", "vertex")){
     g <- CleanNames(g, i)
@@ -206,53 +212,90 @@ g<-union_factor_graphs[[factor_to_vis]]
 conv_nodes<-data.frame(uniprt=V(g)$name,
                        gene_name=V(g)$Gene_name)
 
-#ERK1, or ERK2??
-node_gene_name <- "MAPK1"
-node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
 
+# Define the function to create an ego network plot
+create_ego_net_plot <- function(gene_name, g, conv_nodes, factor_genes_names_df, weights) {
+  # Find the node
+  node <- conv_nodes$uniprt[conv_nodes$gene_name == gene_name]
+  
+  # Create the ego network graph
+  ego_net <- make_ego_graph(g, order = 1, nodes = node)[[1]]
+  
+  # Generate the plot
+  l <- igraph::layout.circle(ego_net)
+  L_df<-as.data.frame(l)
+  colnames(L_df)<-c("x", "y")
+  L_df$Gene_name <- V(ego_net)$Gene_name
+  L_df$Factor1 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor1"]
+  L_df$Factor2 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor2"]
+  L_df$Factor3 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor3"]
+  
+  # Calculate centroid for all factors combined
+  centroids <- L_df %>%
+    filter(Factor1 == TRUE | Factor2 == TRUE | Factor3 == TRUE) %>%
+    summarize(
+      x = mean(x),
+      y = mean(y),
+      Gene_name = "Centroid_All_Factors",
+      Factor1 = TRUE,
+      Factor2 = TRUE,
+      Factor3 = TRUE
+    )
+  # Bind the centroid rows to the original data frame
+  L_df <- bind_rows(L_df, unique(centroids))
+  
+  # Remove the 'feature' column and filter out 'phospho' views
+  factor_weights_wide <- weights %>%
+    select(-feature) %>%
+    filter(view != "phospho") %>%
+    pivot_wider(names_from = view, values_from = value)
 
-ego_net <- make_ego_graph(g, order = 1, nodes = node)[[1]]
+  # Function to create columns for each factor and view
+  add_factor_view_columns <- function(df, weights_in, factor) {
+    factor_weights_subset <- weights_in %>%
+      filter(factor == !!factor) %>%
+      select(node, mRNA, protein)
+    df <- df %>%
+      left_join(factor_weights_subset, by = c("Gene_name" = "node")) %>%
+      rename_with(~ paste0(., "_", factor), c(mRNA, protein)) 
+    return(df)
+  }
+  
+  # Add columns for each factor and view
+  L_df <- L_df %>%
+    add_factor_view_columns(factor_weights_wide, "Factor1") %>%
+    add_factor_view_columns(factor_weights_wide, "Factor2") %>%
+    add_factor_view_columns(factor_weights_wide, "Factor3")
 
-mapk1_ego<-ggraph(ego_net, layout = 'linear', circular = TRUE) + 
-  geom_edge_arc(start_cap = circle(3, 'mm'),
-                end_cap = circle(3, 'mm'), 
-                aes(alpha = weight^2)) + 
-  geom_node_point(size = 5) + 
-  coord_fixed()+theme_void()+
-  geom_node_label(aes(label = Gene_name, colour=direction), repel=FALSE) +
-  labs(title = paste0(node_gene_name, " ego net"))
-
-#EGFR to get SPRY?
-node_gene_name <- "EGFR"
-node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
-
-ego_net <- make_ego_graph(g, order = 1, nodes = node)[[1]]
-
-egfr_ego<-ggraph(ego_net, layout = 'linear', circular = TRUE) + 
-  geom_edge_arc(start_cap = circle(3, 'mm'),
-                end_cap = circle(3, 'mm'), 
-                aes(alpha = weight^2)) + 
-  geom_node_point(size = 5) + 
-  coord_fixed()+theme_void()+
-  geom_node_label(aes(label = Gene_name, colour=direction), repel=FALSE) +
-  labs(title = paste0(node_gene_name, " ego net"))
-
-#something new?
-node_gene_name <- "IGF1R"
-node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
-
-ego_net <- make_ego_graph(g, order = 1, nodes = node)[[1]]
-
-IGF1R_ego<-ggraph(ego_net, layout = 'linear', circular = TRUE) + 
-  geom_edge_arc(start_cap = circle(3, 'mm'),
-                end_cap = circle(3, 'mm'), 
-                aes(alpha = weight^2)) + 
-  geom_node_point(size = 5) + 
-  coord_fixed()+theme_void()+
-  geom_node_label(aes(label = Gene_name, colour=direction), repel=FALSE) +
-  labs(title = paste0(node_gene_name, " ego net"))
-
-
+  # Generate the plot
+  ego_plot <- ggraph(ego_net, layout = l, circular = TRUE) + 
+    geom_convexhull(data = L_df[L_df$Factor1==1,], aes(x = x, y = y, fill = "Factor 1"), alpha = 0.3) + 
+    geom_convexhull(data = L_df[L_df$Factor2==1,], aes(x = x, y = y, fill = "Factor 2"), alpha = 0.3) + 
+    geom_convexhull(data = L_df[L_df$Factor3==1,], aes(x = x, y = y, fill = "Factor 3"), alpha = 0.3) + 
+    geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+               aes(x = x, y = y, colour = protein_Factor1), 
+               alpha = 1, size = 30,
+               stroke = 5) +
+    geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+               aes(x = x, y = y, colour = mRNA_Factor1), 
+               alpha = 1, size = 20,
+               stroke = 5) + 
+    geom_edge_arc(start_cap = circle(3, 'mm'),
+                  end_cap = circle(3, 'mm'), 
+                  aes(alpha = weight^2)) + 
+    geom_node_point(size = 5) + 
+    coord_fixed() + theme_void() +
+    geom_node_label(aes(label = Gene_name), repel = FALSE) +
+    scale_fill_manual(
+      name = "Factors",
+      values = c("Factor 1" = "#92bbd9ff", "Factor 2" = "#dcca2cff", "Factor 3" = "#6fb382ff")
+    ) +
+    labs(title = paste0(gene_name, " ego net")) +
+    scale_colour_gradientn(colours = pal) 
+  
+  
+  return(ego_plot)
+}
 
 conv_nodes<-data.frame(uniprt=V(g)$name,
                        gene_name=V(g)$Gene_name)
@@ -304,11 +347,11 @@ plot_raw_data_ego<-function(node_gene_name, #node which the ego is based on
   desired_order <- c("Untreated", "Vemurafenib", "Trametinib", "Combinations")
   # Convert my_column to a factor with the specified order
   rtk_mrna$drug <- factor(rtk_mrna$drug, levels = desired_order)
-  plot_out<-rtk_mrna[rtk_mrna$ko=="WT",] %>%
-    ggplot( aes(x=drug, y=value, fill=drug)) +
+  plot_out<-rtk_mrna %>%
+    ggplot( aes(x=drug, y=value, fill=ko)) +
     geom_boxplot() +
     geom_jitter(color="black", size=0.4, alpha=0.9) +
-    scale_fill_manual(values = drug_colors) +
+    scale_fill_manual(values = gene_colours) +
     cowplot::theme_cowplot() +
     theme(
       plot.title = element_text(size=18),
@@ -331,24 +374,18 @@ pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/for_sumana/",
                   "/centrality.pdf"), 
     width = 15, height = 15)
 
-plot_grid(centrality_plots,
-          mapk1_ego, egfr_ego,IGF1R_ego,
-          ncol = 2, align = "h", labels = "AUTO")
+centrality_plots
 
-node_gene_name <- "PRKD1"
-node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
+# Example gene names
+gene_names <- c("MAPK1", "EGFR", "IGF1R", "PRKD1")
 
-ego_net <- make_ego_graph(g, order = 1, nodes = node)[[1]]
-ggraph(ego_net, layout = 'linear', circular = TRUE) + 
-  geom_edge_arc(start_cap = circle(3, 'mm'),
-                end_cap = circle(3, 'mm'), 
-                aes(alpha = weight^2)) + 
-  geom_node_point(size = 5) + 
-  coord_fixed()+theme_void()+
-  geom_node_label(aes(label = Gene_name, colour=direction), repel=FALSE) +
-  labs(title = paste0(node_gene_name, " ego net"))
+# Generate plots for each gene name
+plots <- lapply(gene_names, create_ego_net_plot, g = g, conv_nodes = conv_nodes, factor_genes_names_df = factor_genes_names_df, weights=weights)
 
-
+# Display the plots
+for (plot in plots) {
+  print(plot)
+}
 
 plot_raw_data_ego(node_gene_name = "MAPK1", "protein")
 plot_raw_data_ego(node_gene_name = "MAPK1", "mRNA")
@@ -363,4 +400,5 @@ plot_raw_data_ego(node_gene_name = "IGF1R", "mRNA")
 
 plot_raw_data_ego(node_gene_name = "PRKD1", "protein")
 plot_raw_data_ego(node_gene_name = "PRKD1", "mRNA")
+
 dev.off()
