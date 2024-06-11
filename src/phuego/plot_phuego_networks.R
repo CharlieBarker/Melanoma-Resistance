@@ -48,6 +48,7 @@ KDE <- "0.5"
 factorS <- c("Factor1", "Factor2", "Factor3")
 results_dir <- "./results/phuego/results/"
 factor_graphs <- list()
+factor_genes_names <- list()
 
 # Process each factor
 for (factor in factorS) {
@@ -61,7 +62,7 @@ for (factor in factorS) {
     V(factor_graphs[[factor]][[direction]])$source <- "phuego"
     V(factor_graphs[[factor]][[direction]])$direction <- direction
     V(factor_graphs[[factor]][[direction]])$factor <- factor
-    
+    factor_genes_names[[factor]][[direction]] <- V(factor_graphs[[factor]][[direction]])$Gene_name
     # Ensure the graph is directed
     if (!is.directed(factor_graphs[[factor]][[direction]])) {
       factor_graphs[[factor]][[direction]] <- as.directed(factor_graphs[[factor]][[direction]], mode = "mutual")
@@ -120,10 +121,14 @@ union2<-function(g1, g2){
   return(g)
 }
 
+
 # Merge graphs into a super graph
 super_graph <- make_empty_graph(directed = TRUE)
 
 for (factor in factorS) {
+  up_graph<-factor_graphs[[factor]][["up"]]
+  down_graph <- factor_graphs[[factor]][["down"]]
+    
   up_graph <- largest_component(factor_graphs[[factor]][["up"]])
   down_graph <- largest_component(factor_graphs[[factor]][["down"]])
   
@@ -206,13 +211,44 @@ node_gene_name <- "PRKD1"
 node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
 
 ego_net <- make_ego_graph(largest_component_graph, order = 1, nodes = node)[[1]]
-ggraph(ego_net, layout = 'linear', circular = TRUE) + 
+
+library(ggConvexHull)
+
+factor_genes_names_df<-lapply(factor_genes_names, stack)
+factor_genes_names_df <- bind_rows(factor_genes_names_df, .id = "factor")
+l <- igraph::layout.circle(ego_net)
+L_df<-as.data.frame(l)
+colnames(L_df)<-c("x", "y")
+L_df$Gene_name <- V(ego_net)$Gene_name
+L_df$Factor1 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor1"]
+L_df$Factor2 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor2"]
+L_df$Factor3 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor3"]
+
+# Calculate centroid for all factors combined
+centroids <- L_df %>%
+  filter(Factor1 == TRUE | Factor2 == TRUE | Factor3 == TRUE) %>%
+  summarize(
+    x = mean(x),
+    y = mean(y),
+    Gene_name = "Centroid_All_Factors",
+    Factor1 = TRUE,
+    Factor2 = TRUE,
+    Factor3 = TRUE
+  )
+# Bind the centroid rows to the original data frame
+L_df <- bind_rows(L_df, unique(centroids))
+
+
+ggraph(ego_net, layout = l, circular = TRUE) + 
+  geom_convexhull(data = L_df[L_df$Factor1,], aes(x = x, y = y), alpha = 0.3, fill = "#92bbd9ff") + 
+  geom_convexhull(data = L_df[L_df$Factor2,], aes(x = x, y = y), alpha = 0.3, fill = "#dcca2cff") + 
+  geom_convexhull(data = L_df[L_df$Factor3,], aes(x = x, y = y), alpha = 0.3, fill = "#6fb382ff") + 
   geom_edge_arc(start_cap = circle(3, 'mm'),
                 end_cap = circle(3, 'mm'), 
                 aes(alpha = weight^2)) + 
   geom_node_point(size = 5) + 
   coord_fixed()+theme_void()+
-  geom_node_label(aes(label = Gene_name, colour=direction), repel=FALSE) +
+  geom_node_label(aes(label = Gene_name), repel=FALSE) +
   labs(title = paste0(node_gene_name, " ego net"))
 
 
