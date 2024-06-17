@@ -146,7 +146,6 @@ subset_results$centrality <- kinase_list$values[match(subset_results$`Kinase Uni
 # Install ggpubr if it's not already installed
 # install.packages("ggpubr")
 
-
 ggplot(subset_results[!is.na(subset_results$centrality),],
        aes(y = abs(`Median Kinase Statistic`), 
            x = centrality, 
@@ -157,10 +156,12 @@ ggplot(subset_results[!is.na(subset_results$centrality),],
   geom_point() + 
   facet_wrap( ~ experiment, ncol = 2) + 
   theme_cowplot() +
+  theme(legend.position = "bottom") + # Placing legend at the bottom
   geom_text_repel(aes(label = `Kinase Name`), colour = "black", size = 4, max.overlaps = 10) + # Apply label aesthetic here
   coord_cartesian(ylim = c(0, NA)) + # Set the lower limit of y-axis to 0
-  stat_cor(method = "pearson", aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~")), label.x = 0, label.y = 1.5) # Add Pearson correlation coefficient
-ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 22, height = 18, units = "cm")
+  stat_cor(method = "pearson", aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~")), label.x = 0, label.y = 1.5) + # Add Pearson correlation coefficient
+  labs(x = "Centrality (PageRank)", y = "Absolute Median Kinase Statistic") # Add axis titles
+ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 25, height = 20, units = "cm")
 
 
 
