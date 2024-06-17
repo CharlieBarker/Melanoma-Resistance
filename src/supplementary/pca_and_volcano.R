@@ -144,7 +144,11 @@ lfc_arid1a<-lapply(list_of_inputs, function(x){
 })
 #print lfc for RNAseq ARID1A - so that we can generate figure 4
 write.csv(x = lfc_arid1a$`mRNA RNAseq/transcriptomics`,
-          file = "./results/transcriptomics/arid1a_lfc.csv")
+          file = "./results/lfc/mRNA/arid1a_lfc.csv")
+write.csv(x = lfc_arid1a$`Protein abundance`,
+          file = "./results/lfc/protein/arid1a_lfc.csv")
+write.csv(x = lfc_arid1a$`Phosphoproteomic abundance`,
+          file = "./results/lfc/phospho//arid1a_lfc.csv")
 
 lfc_arid1a<-bind_rows(lfc_arid1a, .id = "column_label")
 
@@ -156,6 +160,13 @@ lfc_combination<-lapply(list_of_inputs, function(x){
                    replacement_Vec = replacement_Vec)
   return(lfc$top_table)
 })
+write.csv(x = lfc_combination$`mRNA RNAseq/transcriptomics`,
+          file = "./results/lfc/mRNA/combination_lfc.csv")
+write.csv(x = lfc_combination$`Protein abundance`,
+          file = "./results/lfc/protein/combination_lfc.csv")
+write.csv(x = lfc_combination$`Phosphoproteomic abundance`,
+          file = "./results/lfc/phospho/combination_lfc.csv")
+
 lfc_combination<-bind_rows(lfc_combination, .id = "column_label")
 
 #for TRAMETINIB
@@ -165,6 +176,13 @@ lfc_trametinib<-lapply(list_of_inputs, function(x){
                    replacement_Vec = replacement_Vec)
   return(lfc$top_table)
 })
+write.csv(x = lfc_trametinib$`mRNA RNAseq/transcriptomics`,
+          file = "./results/lfc/mRNA/trametinib_lfc.csv")
+write.csv(x = lfc_trametinib$`Protein abundance`,
+          file = "./results/lfc/protein/trametinib_lfc.csv")
+write.csv(x = lfc_trametinib$`Phosphoproteomic abundance`,
+          file = "./results/lfc/phospho/trametinib_lfc.csv")
+
 lfc_trametinib<-bind_rows(lfc_trametinib, .id = "column_label")
 
 #for VEMURAFENIB
@@ -174,6 +192,13 @@ lfc_vemurafenib<-lapply(list_of_inputs, function(x){
                    replacement_Vec = replacement_Vec)
   return(lfc$top_table)
 })
+write.csv(x = lfc_vemurafenib$`mRNA RNAseq/transcriptomics`,
+          file = "./results/lfc/mRNA/vemurafenib_lfc.csv")
+write.csv(x = lfc_vemurafenib$`Protein abundance`,
+          file = "./results/lfc/protein/vemurafenib_lfc.csv")
+write.csv(x = lfc_vemurafenib$`Phosphoproteomic abundance`,
+          file = "./results/lfc/phospho/vemurafenib_lfc.csv")
+
 lfc_vemurafenib<-bind_rows(lfc_vemurafenib, .id = "column_label")
 
 
