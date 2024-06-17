@@ -16,8 +16,8 @@ library(ghibli)
 library(EnsDb.Hsapiens.v86)
 library(tidyr)
 library(MOFA2)
+library(ggConvexHull)
 
-source("./src/functions/default_variables.R")
 
 knitr::opts_chunk$set(dev = "ragg_png")
 
@@ -27,6 +27,9 @@ setwd(dir = "~/Desktop/Melanoma_Resistance/")
 if (file.exists(packLib)) {
   reticulate::use_condaenv("py37", required = TRUE)
 }
+
+source("./src/functions/default_variables.R")
+pal <- wes_palette("Zissou1", 100, type = "continuous")
 
 # Read kinomics data files
 kinomics_files <- list.files(path = "./data/kinomics/", full.names = TRUE, recursive = TRUE)
@@ -102,6 +105,14 @@ weights <- get_weights(MOFAobject.trained,
                        views = "all", 
                        as.data.frame = TRUE 
 )
+#for clarity swap Factor1 so it means going down with treatment
+weights[weights$factor=="Factor1",]$value<-weights[weights$factor=="Factor1",]$value * -1
+new_up<-factor_graphs$Factor1$down
+new_down<-factor_graphs$Factor1$up
+factor_graphs$Factor1$down<-new_down
+factor_graphs$Factor1$up<-new_up
+
+
 weights$node<-unlist(map(str_split(weights$feature, pattern = "_"),1))
 weights$node<-unlist(map(str_split(weights$node, pattern = ";"),1))
 factor_weights<-weights[weights$factor == factor_to_vis,]
@@ -132,12 +143,16 @@ centrality_plot <- function(graph_in, title, factor_weights) {
   
   # Create the plot with the given title
   pal <- wes_palette("Zissou1", 100, type = "continuous")
-  out <- ggplot(centrality_df, aes(x = rank, y = values, label = names, colour=factor_weight)) + 
+  # Define your plot with ggplot
+  out <- ggplot(centrality_df, aes(x = rank, y = values, label = names, colour = factor_weight)) + 
     geom_point() + 
     cowplot::theme_cowplot() + 
-    geom_text_repel(colour="black") +
+    geom_text_repel(colour = "black") +
     scale_colour_gradientn(colours = pal) + 
-    ggtitle(title) # Add the title here 
+    ggtitle(title) +  # Add the plot title
+    labs(x = "Rank in network", y = "Centrality (PageRank)") +  # Adding axis titles
+    theme(legend.position = "bottom")  # Placing legend at the bottom
+  
   
   return(out)
 }
@@ -230,9 +245,14 @@ create_ego_net_plot <- function(gene_name, g, conv_nodes, factor_genes_names_df,
   L_df$Factor2 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor2"]
   L_df$Factor3 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor3"]
   
+  #reorder nodes according to factors 
+  # df<-L_df[,c("Factor1", "Factor2", "Factor3")]
+  # L_df$x<-L_df[order(rowSums(df[,2:3]),df[,2], decreasing=TRUE),"x"]
+  # L_df$y<-L_df[order(rowSums(df[,2:3]),df[,2], decreasing=TRUE),"y"]
+  # 
   # Calculate centroid for all factors combined
   centroids <- L_df %>%
-    filter(Factor1 == TRUE | Factor2 == TRUE | Factor3 == TRUE) %>%
+    dplyr::filter(Factor1 == TRUE | Factor2 == TRUE | Factor3 == TRUE) %>%
     summarize(
       x = mean(x),
       y = mean(y),
@@ -246,15 +266,15 @@ create_ego_net_plot <- function(gene_name, g, conv_nodes, factor_genes_names_df,
   
   # Remove the 'feature' column and filter out 'phospho' views
   factor_weights_wide <- weights %>%
-    select(-feature) %>%
-    filter(view != "phospho") %>%
+    dplyr::select(-feature) %>%
+    dplyr::filter(view != "phospho") %>%
     pivot_wider(names_from = view, values_from = value)
 
   # Function to create columns for each factor and view
   add_factor_view_columns <- function(df, weights_in, factor) {
     factor_weights_subset <- weights_in %>%
-      filter(factor == !!factor) %>%
-      select(node, mRNA, protein)
+      dplyr::filter(factor == !!factor) %>%
+      dplyr::select(node, mRNA, protein)
     df <- df %>%
       left_join(factor_weights_subset, by = c("Gene_name" = "node")) %>%
       rename_with(~ paste0(., "_", factor), c(mRNA, protein)) 
@@ -267,11 +287,12 @@ create_ego_net_plot <- function(gene_name, g, conv_nodes, factor_genes_names_df,
     add_factor_view_columns(factor_weights_wide, "Factor2") %>%
     add_factor_view_columns(factor_weights_wide, "Factor3")
 
+  
   # Generate the plot
   ego_plot <- ggraph(ego_net, layout = l, circular = TRUE) + 
-    geom_convexhull(data = L_df[L_df$Factor1==1,], aes(x = x, y = y, fill = "Factor 1"), alpha = 0.3) + 
-    geom_convexhull(data = L_df[L_df$Factor2==1,], aes(x = x, y = y, fill = "Factor 2"), alpha = 0.3) + 
-    geom_convexhull(data = L_df[L_df$Factor3==1,], aes(x = x, y = y, fill = "Factor 3"), alpha = 0.3) + 
+    # geom_convexhull(data = L_df[L_df$Factor1==1,], aes(x = x, y = y, fill = "Factor 1"), alpha = 0.3) + 
+    # geom_convexhull(data = L_df[L_df$Factor2==1,], aes(x = x, y = y, fill = "Factor 2"), alpha = 0.3) + 
+    # geom_convexhull(data = L_df[L_df$Factor3==1,], aes(x = x, y = y, fill = "Factor 3"), alpha = 0.3) + 
     geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
                aes(x = x, y = y, colour = protein_Factor1), 
                alpha = 1, size = 30,
@@ -285,7 +306,7 @@ create_ego_net_plot <- function(gene_name, g, conv_nodes, factor_genes_names_df,
                   aes(alpha = weight^2)) + 
     geom_node_point(size = 5) + 
     coord_fixed() + theme_void() +
-    geom_node_label(aes(label = Gene_name), repel = FALSE) +
+    geom_node_label(aes(label = Gene_name),size=6, repel = FALSE) +
     scale_fill_manual(
       name = "Factors",
       values = c("Factor 1" = "#92bbd9ff", "Factor 2" = "#dcca2cff", "Factor 3" = "#6fb382ff")
@@ -372,9 +393,15 @@ plot_raw_data_ego<-function(node_gene_name, #node which the ego is based on
 pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/for_sumana/", 
                   factor_to_vis, 
                   "/centrality.pdf"), 
-    width = 15, height = 15)
+    width = 6, height = 6)
 
 centrality_plots
+dev.off()
+
+pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/for_sumana/", 
+                  factor_to_vis, 
+                  "/ego_nets.pdf"), 
+    width = 12, height = 12)
 
 # Example gene names
 gene_names <- c("MAPK1", "EGFR", "IGF1R", "PRKD1")
@@ -402,3 +429,4 @@ plot_raw_data_ego(node_gene_name = "PRKD1", "protein")
 plot_raw_data_ego(node_gene_name = "PRKD1", "mRNA")
 
 dev.off()
+
