@@ -312,6 +312,7 @@ create_ego_net_plot <- function(gene_name, g, conv_nodes, factor_genes_names_df,
       values = c("Factor 1" = "#92bbd9ff", "Factor 2" = "#dcca2cff", "Factor 3" = "#6fb382ff")
     ) +
     labs(title = paste0(gene_name, " ego net")) +
+    theme(legend.position = "bottom") + # Placing legend at the bottom
     scale_colour_gradientn(colours = pal) 
   
   
@@ -393,7 +394,7 @@ plot_raw_data_ego<-function(node_gene_name, #node which the ego is based on
 pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/for_sumana/", 
                   factor_to_vis, 
                   "/centrality.pdf"), 
-    width = 6, height = 6)
+    width = 6, height = 5)
 
 centrality_plots
 dev.off()
