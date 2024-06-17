@@ -128,8 +128,8 @@ kinase_list<-kinase_list_all_factors$Factor1
 
 # Create the ggplot with ordered Kinase Name and stars for specific kinases
 subset_results <- complete_results %>%
-  filter(arid1a_status == "WT") %>%
-  filter(kinase_type == "STK") %>%
+  dplyr::filter(arid1a_status == "WT") %>%
+  dplyr::filter(kinase_type == "STK") %>%
   mutate(
     in_network = `Kinase Uniprot ID` %in% rownames(kinase_list),
     which_network = case_when(
@@ -157,10 +157,10 @@ ggplot(subset_results[!is.na(subset_results$centrality),],
   geom_point() + 
   facet_wrap( ~ experiment, ncol = 2) + 
   theme_cowplot() +
-  geom_text_repel(aes(label = `Kinase Name`), colour = "black", size = 3, max.overlaps = 10) + # Apply label aesthetic here
+  geom_text_repel(aes(label = `Kinase Name`), colour = "black", size = 4, max.overlaps = 10) + # Apply label aesthetic here
   coord_cartesian(ylim = c(0, NA)) + # Set the lower limit of y-axis to 0
   stat_cor(method = "pearson", aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~")), label.x = 0, label.y = 1.5) # Add Pearson correlation coefficient
-ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 20, height = 20, units = "cm")
+ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 22, height = 18, units = "cm")
 
 
 
