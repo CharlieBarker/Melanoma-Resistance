@@ -7,6 +7,13 @@ import decoupler as dc
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+import omnipath
+import pybiomart
+import pydeseq2
+# Import DESeq2
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds import DeseqStats
+
 import os
 
 #%%
@@ -79,70 +86,116 @@ dc.plot_filter_by_expr(adata, group=None, min_count=min_count, min_total_count=m
 # Obtain genes that pass the thresholds
 genes = dc.filter_by_expr(adata, group=None, min_count=min_count, min_total_count=min_total_count, large_n=1, min_prop=.4)
 
-
-#%%
-#Run DESEQ2
-
 # Filter by these genes
 adata = adata[:, genes].copy()
 
-# Import DESeq2
-from pydeseq2.dds import DeseqDataSet
-from pydeseq2.ds import DeseqStats
 
-# Build DESeq2 object
-dds = DeseqDataSet(
-    adata=adata,
-    design_factors='sample-name',
-    ref_level = ['sample-name', 'Untreated WT'],
-    refit_cooks=True,
-    n_cpus=8,
-)
-# Compute LFCs
-dds.deseq2()
+# %%
+# Run DESEQ2
 
-#%%
-# Extract contrast
+# List of contrasts focusing on untreated vs treated within each genetic background
+contrasts = [
+    ("Untreated WT", "Untreated ARID1A-KO"),
+    ("Untreated WT", "Vermurafenib-1uM WT"),
+    ("Untreated WT", "Trametinib-10nM WT"),
+    ("Untreated WT", "vemurafenib-and-trametinib WT"),
+    ("Untreated ARID1A-KO", "Vermurafenib-1uM ARID1A-KO"),
+    ("Untreated ARID1A-KO", "Trametinib-10nM ARID1A-KO"),
+    ("Untreated ARID1A-KO", "vemurafenib-and-trametinib ARID1A-KO")
+]
 
-stat_res = DeseqStats(dds, contrast=["sample-name", 'Untreated ARID1A-KO', 'Untreated WT'], 
-                      n_cpus=8)
+# Output directory
+output_dir = '/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics'
 
+# Function to run DESeq2 analysis
+def run_deseq2_analysis(adata, contrast, output_dir):
+    condition1, condition2 = contrast
+    # Set the correct reference level for the contrast
+    ref_level = ['sample-name', condition1]
+    
+    # Build DESeq2 object with the specific reference level for the contrast
+    dds = DeseqDataSet(
+        adata=adata,
+        design_factors='sample-name',
+        ref_level=ref_level,
+        refit_cooks=True
+    )
+    # Compute LFCs
+    dds.deseq2()
+    
+    # Create the DeseqStats object with the specific contrast
+    stat_res = DeseqStats(dds, contrast=["sample-name", condition2, condition1])
+    
+    # Compute Wald test
+    stat_res.summary()
+    
+    # Extract results
+    results_df = stat_res.results_df
+    
+    # Create a filename based on the contrast
+    contrast_name = f"{condition1.replace(' ', '_').replace('-', '_')}_vs_{condition2.replace(' ', '_').replace('-', '_')}"
+    file_path = f"{output_dir}/{contrast_name}_lfc.csv"
+    
+    # Save results to CSV
+    results_df.to_csv(file_path)
+    
+    print(f"Results saved to {file_path}")
 
-exp_name = 'sample-name Untreated ARID1A-KO vs Untreated WT'
-# Compute Wald test
-stat_res.summary()
+# Initialize DESeq2 and run for each contrast
+for condition1, condition2 in contrasts:
+    # Call the analysis function
+    run_deseq2_analysis(adata, (condition1, condition2), output_dir)
 
-# Shrink LFCs
-stat_res.lfc_shrink()
-
-# Extract results
-results_df = stat_res.results_df
-results_df.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics/arid1a_lfc.csv')
-
-dc.plot_volcano_df(results_df, x='log2FoldChange', y='padj', top=20)
 
 #%%
 #transcription factor inference 
 
-# Retrieve CollecTRI gene regulatory network
-mat = results_df[['stat']].T.rename(index={'stat': exp_name})
+# Define the directory where DESeq2 results are saved
+results_dir = '/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics'
+
+# Define the directory for transcription factor activity results
+tf_activity_dir = '/Users/charliebarker/Desktop/Melanoma_Resistance/results/tf_activity'
+
+# Define the CollecTRI network
+collectri = dc.get_collectri(organism='human', split_complexes=False)
+
+# Function to run transcription factor inference from DESeq2 results
+def run_tf_inference(results_dir, tf_activity_dir, collectri):
+    # Get all result files in the results directory
+    result_files = [f for f in os.listdir(results_dir) if f.endswith('_lfc.csv')]
+    
+    # Create the TF activity directory if it does not exist
+    if not os.path.exists(tf_activity_dir):
+        os.makedirs(tf_activity_dir)
+    
+    # Process each result file
+    for result_file in result_files:
+        # Construct experiment name from result file name
+        exp_name = result_file.replace('_lfc.csv', '')
+        
+        # Full path to the result file
+        result_path = os.path.join(results_dir, result_file)
+        
+        # Read the DESeq2 results
+        results_df = pd.read_csv(result_path, index_col=0)
+        
+        # Retrieve CollecTRI gene regulatory network
+        mat = results_df[['stat']].T.rename(index={'stat': exp_name})
+        
+        # Run ULM for transcription factor activity and p-values
+        tf_acts, tf_pvals = dc.run_ulm(mat=mat, net=collectri, verbose=True)
+        
+        # Save TF activities and p-values to CSV files
+        tf_acts_file = f"{tf_activity_dir}/{exp_name}_tf_acts.csv"
+        tf_pvals_file = f"{tf_activity_dir}/{exp_name}_tf_pval.csv"
+        tf_acts.T.to_csv(tf_acts_file)
+        tf_pvals.T.to_csv(tf_pvals_file)
+        
+        print(f"TF activities saved to {tf_acts_file}")
+        print(f"TF p-values saved to {tf_pvals_file}")
 
 
-tf_acts, tf_pvals = dc.run_ulm(mat=mat, net=collectri, verbose=True)	\
-
-# Extract logFCs and pvals
-logFCs = results_df[['log2FoldChange']].T.rename(index={'log2FoldChange': exp_name})
-pvals = results_df[['padj']].T.rename(index={'padj': exp_name})
-dc.plot_barplot(tf_acts, exp_name, top=25, vertical=True)
-# Write tf_acts to a CSV file
-tf_acts.T.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics/tf_activity/arid1a_tf_acts.csv')
-tf_pvals.T.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/transcriptomics/tf_activity/arid1a_tf_pval.csv')
+# Run the transcription factor inference
+run_tf_inference(results_dir, tf_activity_dir, collectri)
 
 # %%
-# Plot the specific targets
-
-dc.plot_targets(results_df, stat='stat', source_name='RFX5', net=collectri, top=20)
-dc.plot_targets(results_df, stat='stat', source_name='RFXAP', net=collectri, top=20)
-dc.plot_targets(results_df, stat='stat', source_name='CIITA', net=collectri, top=20)
-dc.plot_targets(results_df, stat='stat', source_name='TWIST1', net=collectri, top=20)
-
