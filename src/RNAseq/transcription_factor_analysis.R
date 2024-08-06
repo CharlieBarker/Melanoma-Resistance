@@ -14,6 +14,7 @@ library(dplyr)
 library(tidyr)
 library(tibble)  # Ensure tibble is loaded for rownames_to_column
 library(wesanderson)
+library(tidyverse)
 
 # Define directory with the files
 tf_activity_dir <- '/Users/charliebarker/Desktop/Melanoma_Resistance/results/tf_activity/'
@@ -67,7 +68,7 @@ for (acts_file in tf_files) {
 df <- do.call("rbind", vol_plot_list)
 rownames(df)<-NULL
 
-jun_tfs<-df# [grepl(df$TF, pattern = "JUN"),]
+jun_tfs<-df#[grepl(df$TF, pattern = "JUN"),]
 pal <- wes_palette("Zissou1", 100, type = "continuous")
 
 # Add 'genetics' and 'drug_treatment' columns
@@ -85,20 +86,6 @@ jun_tfs <- jun_tfs %>%
       TRUE ~ NA_character_
     )
   )
-# ggplot(jun_tfs, aes(x=TF, y=logFC, colour=logFC)) +
-#   scale_colour_gradientn(colours = pal) + 
-#   geom_hline(yintercept = 0, color = "black") + # Add horizontal line at y=0
-#   geom_segment(aes(x=TF, xend=TF, y=0, yend=logFC), color="grey") +
-#   geom_point(aes(size = -log10(padj))) +  # Adjust the size of points here
-#   theme_light() +
-#   theme(
-#     panel.grid.major.x = element_blank(),
-#     panel.border = element_rect(color = "lightgrey", fill = NA, size = 1),
-#     axis.ticks.x = element_blank()
-#   ) +
-#   xlab("") +
-#   ylab("TF activity logFC") +
-#   facet_grid(genetics ~ drug_treatment)
 
 
 # Prepare the data for plotting
@@ -112,52 +99,115 @@ both_sig<-plot_data$padj_ARID1A < 0.001 | plot_data$padj_WT < 0.001
 plot_data$label[both_sig]<- plot_data$TF[both_sig]
 # Create the scatter plot with x = y line
 library(ggrepel)
-ggplot(plot_data, aes(x = logFC_ARID1A, y = logFC_WT, label=label)) +
+
+# Create the linear model
+model <- lm(logFC_WT ~ logFC_ARID1A, data = plot_data)
+# Extract residuals
+plot_data$residuals <- resid(model)
+
+tf_plot<-ggplot(plot_data, aes(x = logFC_ARID1A, y = logFC_WT, label=label, colour = residuals)) +
   geom_point() +  # Plot the points
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +  # Add x = y line
   facet_wrap(~drug_treatment) +  # Facet by drug treatment
-  labs(x = "logFC ARID1A", y = "logFC WT", title = "LogFC Comparison Between ARID1A and WT") +
+  labs(x = "logFC ARID1A", y = "logFC WT", title = "LogFC Comparison of TF activation Between ARID1A and WT") +
   theme_minimal()  + # Use a minimal theme
-  geom_text_repel()
+  geom_text_repel(colour="black")
+
+plot_residuals_tf <- plot_data[plot_data$padj_ARID1A < 0.1 | plot_data$padj_WT < 0.1,] %>%
+  dplyr::select(-logFC_ARID1A, -logFC_WT, -padj_ARID1A, -padj_WT, -label)  %>% 
+  pivot_wider(names_from = drug_treatment, values_from = residuals, names_sep = "_") %>%
+  dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
+
+residual_plot_tf<-ggplot(plot_residuals_tf, aes(x = `Untreated vs Trametinib`, y = `Untreated vs Vemurafenib`, label=TF)) +
+  geom_point() +  # Plot the points
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  
+  labs(x = "ARID1A ~ WT Residuals for Trametinib", y = "ARID1A ~ WT Residuals for Vermurafenib", title = "TF activity Comparison Between ARID1A and WT") +
+  theme_minimal() + # Use a minimal theme
+  geom_text_repel(colour="black")
+
+#visualise the interesting transcription factors 
+
+tfs_of_interest<-read.csv(file = "./results/collectri/tfs_of_interest.csv")
+
+# Define the file paths
+file_paths <- list.files(path = "./results/transcriptomics/", pattern = "*.csv", full.names = T)
+
+# Create a function to extract information from the filename
+extract_info <- function(filename) {
+  parts <- strsplit(filename, "_vs_|_lfc.csv")[[1]]
+  list(
+    file = parts[1],
+    exp = parts[2],
+    genetic_ko = ifelse(grepl("ARID1A", parts[1]), "ARID1A_KO", "WT"),
+    drug = gsub("_ARID1A_KO|_WT", "", parts[2])
+  )
+}
+
+# Initialize an empty list to store data frames
+dfs <- list()
+
+# Loop through each file and read the data
+for (file_path in file_paths) {
+  data <- read_csv(file_path, show_col_types = F)
+  info <- extract_info(file_path)
+  data <- data %>%
+    mutate(
+      file = info$file,
+      exp = info$exp,
+      genetic_ko = info$genetic_ko,
+      drug = info$drug
+    )
+  dfs[[file_path]] <- data
+}
+
+# Combine all data frames into one
+combined_df <- bind_rows(dfs)
+
+plot_expression <- combined_df %>%
+  dplyr::select(-exp, -file, -baseMean, -lfcSE, -stat, -pvalue)  %>% 
+  pivot_wider(names_from = genetic_ko, values_from = c(log2FoldChange, padj), names_sep = "_") %>%
+  dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
+# Create the linear model
+model <- lm(log2FoldChange_ARID1A_KO ~ log2FoldChange_WT, data = plot_expression)
+# Extract residuals
+plot_expression$residuals <- resid(model)
+
+# Join the data frames to add the transcription factor (tf) information
+plot_expression <- plot_expression %>%
+  left_join(tfs_of_interest, by = c("gene_symbol" = "target")) 
+plot_expression<-plot_expression[!is.na(plot_expression$source),]
+
+expression_plot<-ggplot(plot_expression, aes(x = log2FoldChange_ARID1A_KO, y = log2FoldChange_WT, label=gene_symbol, colour =weight)) +
+  geom_point() +  # Plot the points
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +  # Add x = y line
+  facet_grid(source~drug) +  # Facet by drug treatment
+  labs(x = "logFC ARID1A", y = "logFC WT", title = "LogFC Comparison of expression Between ARID1A and WT") +
+  theme_minimal() + # Use a minimal theme
+  geom_text_repel(colour="black")
 
 
-library(dplyr)
-library(ggplot2)
-library(ggfortify)
+plot_residuals <- plot_expression[plot_expression$padj_ARID1A_KO < 0.1 | plot_expression$padj_WT < 0.1,] %>%
+  dplyr::select(-log2FoldChange_ARID1A_KO, -log2FoldChange_WT, -padj_ARID1A_KO, -padj_WT, -PMID, -weight)  %>% 
+  pivot_wider(names_from = drug, values_from = residuals, names_sep = "_") %>%
+  dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
 
-wide_df <- df %>%
-  pivot_wider(names_from = exp, values_from = logFC, id_cols = TF)
-
-# Transpose the matrix: Experiments as rows, TFs as columns
-data_matrix <- wide_df %>%
-  dplyr::select(-TF) %>%        # Remove the TF column
-  t()                    # Transpose the data
-
-# Convert transposed data matrix to a data frame
-data_matrix_df <- as.data.frame(data_matrix)
-colnames(data_matrix_df) <- wide_df$TF  # Set column names as TFs
-rownames(data_matrix_df) <- colnames(wide_df)[-1]  # Set row names as experiments
-
-# Standardize the data
-data_matrix_scaled <- scale(data_matrix_df)
-
-# Perform PCA
-pca_result <- prcomp(data_matrix_scaled, center = TRUE, scale. = TRUE)
-
-# Plot with ggplot2
-autoplot(pca_result, data = data.frame(Experiment = rownames(data_matrix_df)), label = TRUE, colour = 'Experiment')
+residual_plot<-ggplot(plot_residuals, aes(x = Trametinib_10nM, y = Vermurafenib_1uM, label=gene_symbol)) +
+  geom_point() +  # Plot the points
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  
+  facet_grid(~source) +  # Facet by drug treatment
+  labs(x = "ARID1A ~ WT Residuals for Trametinib", y = "ARID1A ~ WT Residuals for Vermurafenib", title = "LogFC Comparison Between ARID1A and WT") +
+  theme_minimal() + # Use a minimal theme
+  geom_text_repel(colour="black")
 
 
-# Extract PCA loadings
-pca_loadings <- pca_result$rotation
 
-# Get the loadings for PC2
-pc2_loadings <- pca_loadings[, "PC1"]
+pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_deepdive.pdf"), 
+    width = 12, height = 6)
+tf_plot
+expression_plot
+residual_plot
+residual_plot_tf
+dev.off()
 
-# Identify TFs that explain the most variance in PC2
-# Sort by absolute value to get the most contributing TFs
-top_tf_pc2 <- tibble(TF = names(pc2_loadings), Loading_PC2 = pc2_loadings) %>%
-  arrange(desc(abs(Loading_PC2)))
-
-# Print the top TFs explaining the most variance in PC2
-print(top_tf_pc2)

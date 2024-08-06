@@ -101,7 +101,7 @@ complete_results$experiment <- gsub(".xlsx$", "", complete_results$experiment)
 complete_results$experiment <- factor(complete_results$experiment, levels = c("Vemurafenib vs Untreated", "Trametinib vs Untreated", "Combined vs Untreated",
                                                                             "Combined vs Vemurafenib", "Combined vs Trametinib"))
 
-drug_targets<-complete_results[complete_results$`Kinase Name` %in% c("ERK1", "BRAF", "PKD1"),]
+drug_targets<-complete_results[complete_results$`Kinase Name` %in% c("ERK1", "BRAF", "PKD1", "JNK1", "JNK2", "JNK3"),]
 drug_targets<-drug_targets[!grepl(drug_targets$experiment, pattern="ARID1A"),]
 pal <- wes_palette("Zissou1", 100, type = "continuous")
 
@@ -122,7 +122,7 @@ ggplot(drug_targets[!is.na(drug_targets$experiment),], aes(x=`Kinase Name`, y=`M
   ylab("Median Kinase Statistic") +
   facet_grid(arid1a_status ~ experiment)
 
-ggsave("./results/kinomics_microarray/erk_braf_lolipop.pdf", width = 30, height = 12, units = "cm")
+ggsave("./results/kinomics_microarray/erk_braf_lolipop.pdf", width = 40, height = 12, units = "cm")
 
 kinase_list<-kinase_list_all_factors$Factor1
 

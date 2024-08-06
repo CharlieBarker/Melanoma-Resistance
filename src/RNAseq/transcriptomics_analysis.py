@@ -21,6 +21,17 @@ import os
 
 # Retrieve CollecTRI gene regulatory network
 collectri = dc.get_collectri(organism='human', split_complexes=False)
+# We can extract the specific lines of regulons of interest for further analysis 
+
+# Define the targets of interest
+targets_of_interest = ['MYC', 'AP1', 'JUN']
+
+# Filter the DataFrame to include only the rows where the target is in the targets_of_interest list
+filtered_df = collectri[collectri['source'].isin(targets_of_interest)]
+
+# Save the filtered DataFrame to a CSV file
+filtered_df.to_csv('/Users/charliebarker/Desktop/Melanoma_Resistance/results/collectri/tfs_of_interest.csv', index=False)
+
 # Read raw data and process it
 file_path = '/Users/charliebarker/Desktop/Melanoma_Resistance/data/RNAseq/data/geneCounts_fixed.csv'
 design_path = '/Users/charliebarker/Desktop/Melanoma_Resistance/data/RNAseq/Study_design.csv'

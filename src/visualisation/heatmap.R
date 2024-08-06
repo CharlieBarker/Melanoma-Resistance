@@ -1,5 +1,6 @@
 library(reshape2)
 library(plyr)
+library(igraph)
 
 RTKs<-c("EGFR", "FGFR2", "FGFR1", "IGF1R", "INSR", "FYN", "NTRK2", "MET",  #receptor tyrosine.
         "ABL2", "TXK", "FLT1") #non receptor tyrosine.
