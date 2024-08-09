@@ -123,7 +123,13 @@ union2<-function(g1, g2){
 
 
 # Merge graphs into a super graph
+super_graph_down <- make_empty_graph(directed = TRUE)
+super_graph_up <- make_empty_graph(directed = TRUE)
 super_graph <- make_empty_graph(directed = TRUE)
+
+conv_nodes<-data.frame(uniprot = V(super_graph)$name,
+                       genename= V(super_graph)$Gene_name)
+write.csv(conv_nodes, file = "./data/name_converter_for_network.csv")
 
 for (factor in factorS) {
   up_graph<-factor_graphs[[factor]][["up"]]
@@ -134,13 +140,15 @@ for (factor in factorS) {
   
   # Merge up and down graphs for each factor
   combined_graph <- union2(up_graph, down_graph)
-  #combined_graph <- up_graph
-  
+
   # Add the combined graph to the super graph
   super_graph <- union2(super_graph, combined_graph)
+  super_graph_down <- union2(super_graph_down, down_graph)
+  super_graph_up <- union2(super_graph_up, up_graph)
+  
 }
 
-largest_component_graph <- super_graph
+largest_component_graph <- super_graph_up
 
 library(ggraph)
 library(igraph)
@@ -149,107 +157,80 @@ random_number <- sample(1:1000, 1)
 print(random_number)
 # Calculate the degree for each vertex
 vertex_degrees <- degree(largest_component_graph)
-
 # Add the degree as a vertex attribute
 V(largest_component_graph)$degree <- vertex_degrees
-
 # Assuming `V(largest_component_graph)$factor` is stored in a variable
 factors <- V(largest_component_graph)$factor
-
 # Replace the factor levels
 factors <- ifelse(factors == "Factor1", "Factor 1 (Drug Agnostic)",
                   ifelse(factors == "Factor2", "Factor 2 (Combination Specific)",
                          ifelse(factors == "Factor3", "Factor 3 (ARID1A rewired)", factors)))
-
 # Assign the updated factors back to the graph
 V(largest_component_graph)$factor <- factors
 
 #902
 set.seed(997)
 l <- igraph::layout.graphopt(largest_component_graph)
+
+
 big_graph<-ggraph(largest_component_graph, layout = l ) + 
   geom_edge_link(alpha=0.3) + 
-  geom_node_point(aes(colour = factor)) +
+  geom_node_point(aes(colour = factor), size = 2) +
   coord_fixed() +
   theme_graph(base_family = "sans",base_size = 12)+  
   theme(legend.position = "none",
         plot.margin = unit(c(0,0,0,0), 'lines'))+
   # ghibli stuff
-  scale_colour_ghibli_d("YesterdayMedium", direction = -1)
+  scale_colour_ghibli_d("YesterdayMedium", direction = -1) +
+  ggtitle("graph showing all the factors")
 
 
 # Facetted graph with reduced node size
 facetted_graph <- ggraph(largest_component_graph, layout = l) + 
   geom_edge_link(alpha = 0.3) + 
-  geom_node_point(aes(colour = factor), size = 1) + # Adjust size here
+  geom_node_point(aes(colour = factor), size = 2) + # Adjust size here
   coord_fixed() +
   facet_graph(~ factor, switch = "x") +
   theme_graph(base_family = "sans") +  
   theme(legend.position = "none",
         plot.margin = unit(c(0, 0, 0, 0), 'lines')) +
-  scale_colour_ghibli_d("YesterdayMedium", direction = -1)
+  scale_colour_ghibli_d("YesterdayMedium", direction = -1) +
+  ggtitle("graph showing all the factors facetted")
 
 
-pdf("./paper/plots/phuego_facetted.pdf", width = 8, height = 6)
-ggarrange(big_graph, facetted_graph, ncol = 1, nrow = 2)
+
+pdf("./paper/plots/phuego_facetted_up.pdf", width = 8, height = 6)
+big_graph
+facetted_graph
+# Get network greyed out
+if (exists("subnet")) {
+  zoom_in_network<-largest_component_graph
+  V(zoom_in_network)$zoom_in <- V(zoom_in_network)$name %in% V(subnet)$name
+  # Facetted graph with reduced node size
+  zoom_in_network <- ggraph(zoom_in_network, layout = l) + 
+    geom_edge_link(alpha = 0.3) + 
+    geom_node_point(aes(colour = zoom_in), size = 2) + # Adjust size here
+    coord_fixed() +
+    theme_graph(base_family = "sans") +  
+    theme(legend.position = "none",
+          plot.margin = unit(c(0, 0, 0, 0), 'lines')) +
+    scale_color_manual(values = c("lightgrey", "red")) +
+    ggtitle("graph showing the pcsf from figure 2 highlighted ")
+  zoom_in_network
+  
+} else {
+  message("The variable 'subnet' is not defined.")
+}
 
 V(largest_component_graph)$is_subgraph = V(largest_component_graph)$factor == "Factor 1 (Drug Agnostic)"
-
 ggraph(largest_component_graph, layout = l ) + 
   geom_edge_link(alpha=0.3) + 
-  geom_node_point(aes(colour=is_subgraph)) +
+  geom_node_point(aes(colour=is_subgraph), size = 2) +
   coord_fixed() +
   theme_graph(base_family = "sans",base_size = 12)+  
   theme(legend.position = "none",
-        plot.margin = unit(c(0,0,0,0), 'lines'))+ 
-  scale_colour_manual(values=c("lightgrey", "#92bbd9ff"))
-
-
-conv_nodes<-data.frame(uniprt=V(largest_component_graph)$name,
-                       gene_name=V(largest_component_graph)$Gene_name)
-node_gene_name <- "PRKD1"
-node= conv_nodes$uniprt[conv_nodes$gene_name == node_gene_name]
-
-ego_net <- make_ego_graph(largest_component_graph, order = 1, nodes = node)[[1]]
-
-library(ggConvexHull)
-
-factor_genes_names_df<-lapply(factor_genes_names, stack)
-factor_genes_names_df <- bind_rows(factor_genes_names_df, .id = "factor")
-l <- igraph::layout.circle(ego_net)
-L_df<-as.data.frame(l)
-colnames(L_df)<-c("x", "y")
-L_df$Gene_name <- V(ego_net)$Gene_name
-L_df$Factor1 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor1"]
-L_df$Factor2 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor2"]
-L_df$Factor3 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor3"]
-
-# Calculate centroid for all factors combined
-centroids <- L_df %>%
-  filter(Factor1 == TRUE | Factor2 == TRUE | Factor3 == TRUE) %>%
-  summarize(
-    x = mean(x),
-    y = mean(y),
-    Gene_name = "Centroid_All_Factors",
-    Factor1 = TRUE,
-    Factor2 = TRUE,
-    Factor3 = TRUE
-  )
-# Bind the centroid rows to the original data frame
-L_df <- bind_rows(L_df, unique(centroids))
-
-
-ggraph(ego_net, layout = l, circular = TRUE) + 
-  geom_convexhull(data = L_df[L_df$Factor1,], aes(x = x, y = y), alpha = 0.3, fill = "#92bbd9ff") + 
-  geom_convexhull(data = L_df[L_df$Factor2,], aes(x = x, y = y), alpha = 0.3, fill = "#dcca2cff") + 
-  geom_convexhull(data = L_df[L_df$Factor3,], aes(x = x, y = y), alpha = 0.3, fill = "#6fb382ff") + 
-  geom_edge_arc(start_cap = circle(3, 'mm'),
-                end_cap = circle(3, 'mm'), 
-                aes(alpha = weight^2)) + 
-  geom_node_point(size = 5) + 
-  coord_fixed()+theme_void()+
-  geom_node_label(aes(label = Gene_name), repel=FALSE) +
-  labs(title = paste0(node_gene_name, " ego net"))
-
+        plot.margin = unit(c(0,0,0,0), 'lines')) + 
+  scale_colour_manual(values=c("lightgrey", "#92bbd9ff")) +
+  ggtitle("graph showing factor 1 highlighted")
 
 dev.off()

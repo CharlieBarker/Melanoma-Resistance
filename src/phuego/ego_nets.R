@@ -60,7 +60,7 @@ results_dir <- "./results/phuego/results/"
 factor_graphs <- list()
 factor_genes_names <- list()
 
-factor_to_vis<-"Factor1"
+factor_to_vis<-"Factor3"
 
 # Process each factor
 for (factor in factorS) {
@@ -154,15 +154,37 @@ centrality_plot <- function(graph_in, title, factor_weights) {
     theme(legend.position = "bottom")  # Placing legend at the bottom
   
   
-  return(out)
+  return(centrality_df)
 }
 
 # Create the centrality plots with titles
-centrality_plots <- plot_grid(
-  centrality_plot(factor_graphs[[factor_to_vis]]$up, "Factor 1 Up - Centrality Plot", collapsed_factor_weights), 
-  centrality_plot(factor_graphs[[factor_to_vis]]$down, "Factor 1 Down - Centrality Plot", collapsed_factor_weights),
-  ncol = 2, align = "h", rel_widths = c(3, 3)
-)
+factor1_up_centrality<-centrality_plot(factor_graphs[[factor_to_vis]]$up, paste0(factor_to_vis, " Up - Centrality Plot"), collapsed_factor_weights) 
+factor1_down_centrality<-centrality_plot(factor_graphs[[factor_to_vis]]$down, paste0(factor_to_vis, " Down - Centrality Plot"), collapsed_factor_weights)
+factor_centrality<-rbind(factor1_up_centrality, factor1_down_centrality)
+
+
+# Order and rank centrality
+factor_centrality <- factor_centrality[order(factor_centrality$values, decreasing = TRUE), ]
+factor_centrality$rank <- 1:nrow(factor_centrality)
+
+# Retrieve gene names
+genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = as.character(factor_centrality$ind), 
+                                     keytype = "UNIPROTID", 
+                                     columns = "GENENAME")
+factor_centrality$names <- genename_df$GENENAME[match(factor_centrality$ind, genename_df$UNIPROTID)]
+
+factor_centrality$names[factor_centrality$rank > 30] <- ""
+
+centrality_plots<-ggplot(factor_centrality, aes(x = rank, y = values, label = names)) + 
+  geom_point() + 
+  cowplot::theme_cowplot() + 
+  geom_text_repel(colour = "black", force = 15) +
+  scale_colour_gradientn(colours = pal) + 
+  labs(x = "Rank in network", y = "Centrality (PageRank)", 
+       title = "Centrality of Network describing combination-specific changes") +  # Adding axis titles
+  theme(legend.position = "bottom", plot.title = element_text(size=10))  # Placing legend at the bottom
+
+
 
 
 
@@ -226,6 +248,90 @@ g<-union_factor_graphs[[factor_to_vis]]
 
 conv_nodes<-data.frame(uniprt=V(g)$name,
                        gene_name=V(g)$Gene_name)
+
+####PCSF on the most central nodes (pagerank)####
+
+library(OmnipathR)
+library(PCSF)
+library(readr)
+
+names_for_subnet <-factor_centrality$ind[factor_centrality$rank < 50] 
+
+####prep data for pcsf#####
+terminal<-rep(1, length(names_for_subnet))
+names(terminal)<-names_for_subnet
+####parameters ####
+n<-30 #no. of runs30
+r<-5 #adding random noise to edge costs  5
+w<-40 #number of trees in output 40
+b<-8 #tuning node prizes 1
+mu<-0.005 #hub penalisation #0.005
+
+######perfor pcsf n times adding some noise to produce more robust network. #####
+subnet <- PCSF_rand(g,
+                    terminal,
+                    n = n,
+                    r = r,
+                    w = w,
+                    b = b,
+                    mu = mu) 
+
+subnet_l <- igraph::layout_with_graphopt(subnet)
+V(subnet)$Gene_name <- conv_nodes$gene_name[match(V(subnet)$name, conv_nodes$uniprt)]
+L_df<-as.data.frame(subnet_l)
+colnames(L_df)<-c("x", "y")
+L_df$Gene_name <- V(subnet)$Gene_name
+L_df$Factor1 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor1"]
+L_df$Factor2 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor2"]
+L_df$Factor3 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor3"]
+
+# Remove the 'feature' column and filter out 'phospho' views
+factor_weights_wide <- weights %>%
+  dplyr::select(-feature) %>%
+  dplyr::filter(view != "phospho") %>%
+  pivot_wider(names_from = view, values_from = value)
+
+# Function to create columns for each factor and view
+add_factor_view_columns <- function(df, weights_in, factor) {
+  factor_weights_subset <- weights_in %>%
+    dplyr::filter(factor == !!factor) %>%
+    dplyr::select(node, mRNA, protein)
+  df <- df %>%
+    left_join(factor_weights_subset, by = c("Gene_name" = "node")) %>%
+    rename_with(~ paste0(., "_", factor), c(mRNA, protein)) 
+  return(df)
+}
+
+# Add columns for each factor and view
+L_df <- L_df %>%
+  add_factor_view_columns(factor_weights_wide, "Factor1") %>%
+  add_factor_view_columns(factor_weights_wide, "Factor2") %>%
+  add_factor_view_columns(factor_weights_wide, "Factor3")
+
+
+
+pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/plots/PCSF_", factor_to_vis, ".pdf"), 
+    width = 18, height = 15)
+# Generate the plot
+ggraph(subnet, layout = subnet_l) + 
+  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+             aes(x = x, y = y, colour = protein_Factor3), 
+             alpha = 1, size = 10,
+             stroke = 5) +
+  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+             aes(x = x, y = y, colour = mRNA_Factor3), 
+             alpha = 1, size = 6,
+             stroke = 5) + 
+  geom_edge_link(start_cap = circle(3, 'mm'),
+                 end_cap = circle(3, 'mm'), 
+                 aes(alpha = weight)) + 
+  geom_node_point(size = 5) + 
+  coord_fixed() + theme_void() +
+  geom_node_label(aes(label = Gene_name),size=4, repel = FALSE) +
+  theme(legend.position = "bottom") + # Placing legend at the bottom
+  scale_colour_gradientn(colours = pal, na.value = "lightgrey")
+dev.off()
+
 
 
 # Define the function to create an ego network plot
@@ -294,11 +400,11 @@ create_ego_net_plot <- function(gene_name, g, conv_nodes, factor_genes_names_df,
     # geom_convexhull(data = L_df[L_df$Factor2==1,], aes(x = x, y = y, fill = "Factor 2"), alpha = 0.3) + 
     # geom_convexhull(data = L_df[L_df$Factor3==1,], aes(x = x, y = y, fill = "Factor 3"), alpha = 0.3) + 
     geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
-               aes(x = x, y = y, colour = protein_Factor1), 
+               aes(x = x, y = y, colour = protein_Factor3), 
                alpha = 1, size = 30,
                stroke = 5) +
     geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
-               aes(x = x, y = y, colour = mRNA_Factor1), 
+               aes(x = x, y = y, colour = mRNA_Factor3), 
                alpha = 1, size = 20,
                stroke = 5) + 
     geom_edge_arc(start_cap = circle(3, 'mm'),
@@ -380,7 +486,7 @@ plot_raw_data_ego<-function(node_gene_name, #node which the ego is based on
       axis.text.x = element_text(angle = 70, hjust = 1, size = rel(1)),
     ) +
     xlab("") +
-    facet_wrap(~name) + 
+    facet_wrap(~name, scales = "free") + 
     grids(linetype = "dashed")+
     labs(
       x = "Drug treatment",
@@ -404,8 +510,31 @@ pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/for_sumana/",
                   "/ego_nets.pdf"), 
     width = 12, height = 12)
 
+# Generate the plot
+ggraph(subnet, layout = subnet_l) + 
+  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+             aes(x = x, y = y, colour = protein_Factor3), 
+             alpha = 1, size = 10,
+             stroke = 5) +
+  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+             aes(x = x, y = y, colour = mRNA_Factor3), 
+             alpha = 1, size = 6,
+             stroke = 5) + 
+  geom_edge_link(start_cap = circle(3, 'mm'),
+                 end_cap = circle(3, 'mm'), 
+                 aes(alpha = weight)) + 
+  geom_node_point(size = 5) + 
+  coord_fixed() + theme_void() +
+  geom_node_label(aes(label = Gene_name),size=4, repel = FALSE) +
+  theme(legend.position = "bottom") + # Placing legend at the bottom
+  scale_colour_gradientn(colours = pal, na.value = "lightgrey")
+
 # Example gene names
 gene_names <- c("MAPK1", "EGFR", "IGF1R", "PRKD1")
+# factor 2 
+gene_names <- c("EGFR", "SRC", "AKT1", "MAP3K7")
+# #factor3 
+# gene_names <- c("MAP3K5", "FGFR1", "FGFR2", "MAP2K3", "PTK2")
 
 # Generate plots for each gene name
 plots <- lapply(gene_names, create_ego_net_plot, g = g, conv_nodes = conv_nodes, factor_genes_names_df = factor_genes_names_df, weights=weights)
@@ -415,19 +544,18 @@ for (plot in plots) {
   print(plot)
 }
 
-plot_raw_data_ego(node_gene_name = "MAPK1", "protein")
-plot_raw_data_ego(node_gene_name = "MAPK1", "mRNA")
+plot_both_modes <- function(gene){
+  out<-list(protein=plot_raw_data_ego(node_gene_name = gene, "protein"),
+            mRNA=plot_raw_data_ego(node_gene_name = gene, "mRNA"))
+  return(out)
+}
 
-plot_raw_data_ego(node_gene_name = "EGFR", "protein")
-plot_raw_data_ego(node_gene_name = "EGFR", "mRNA")
+# Generate plots for each gene name
+plots <- lapply(gene_names, plot_both_modes)
 
-
-plot_raw_data_ego(node_gene_name = "IGF1R", "protein")
-plot_raw_data_ego(node_gene_name = "IGF1R", "mRNA")
-
-
-plot_raw_data_ego(node_gene_name = "PRKD1", "protein")
-plot_raw_data_ego(node_gene_name = "PRKD1", "mRNA")
-
+# Display the plots
+for (plot in plots) {
+  print(plot)
+}
 dev.off()
 

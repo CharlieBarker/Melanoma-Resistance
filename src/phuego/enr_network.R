@@ -43,22 +43,49 @@ weights$node<-unlist(map(str_split(weights$feature, pattern = "_"),1))
 weights$node<-unlist(map(str_split(weights$node, pattern = ";"),1))
 
 
-#get phuego graphs
+
+# Get phuego graphs
 KDE <- "0.5"
 factorS <- c("Factor1", "Factor2", "Factor3")
 results_dir <- "./results/phuego/results/"
-factor_graphs<-list()
+factor_graphs <- list()
+factor_genes_names <- list()
 
-#provisionally we need to find a way to make the phuego networks directed. 
-
+# Process each factor
 for (factor in factorS) {
-  file_graphml_up<-paste0(results_dir, factor, "/increased/KDE_", KDE, "/networks/KDE.graphml")
-  file_graphml_down<-paste0(results_dir, factor, "/decreased/KDE_", KDE, "/networks/KDE.graphml")
-  factor_graphs[[factor]][["up"]]<-read_graph(file=file_graphml_up,format = "graphml")
-  factor_graphs[[factor]][["down"]]<-read_graph(file=file_graphml_down,format = "graphml")
-  E(factor_graphs[[factor]][["up"]])$source <- "phuego"
-  E(factor_graphs[[factor]][["down"]])$source <- "phuego"
+  file_graphml_up <- file.path(results_dir, factor, "increased", paste0("KDE_", KDE), "networks", "KDE.graphml")
+  file_graphml_down <- file.path(results_dir, factor, "decreased", paste0("KDE_", KDE), "networks", "KDE.graphml")
+  
+  factor_graphs[[factor]][["up"]] <- read_graph(file = file_graphml_up, format = "graphml")
+  factor_graphs[[factor]][["down"]] <- read_graph(file = file_graphml_down, format = "graphml")
+  
+  for (direction in c("up", "down")) {
+    V(factor_graphs[[factor]][[direction]])$source <- "phuego"
+    V(factor_graphs[[factor]][[direction]])$direction <- direction
+    V(factor_graphs[[factor]][[direction]])$factor <- factor
+    factor_genes_names[[factor]][[direction]] <- V(factor_graphs[[factor]][[direction]])$Gene_name
+    
+    # Ensure the graph is directed
+    if (!is.directed(factor_graphs[[factor]][[direction]])) {
+      factor_graphs[[factor]][[direction]] <- as.directed(factor_graphs[[factor]][[direction]], mode = "mutual")
+    }
+  }
 }
+
+factor_genes_names_df<-lapply(factor_genes_names, stack)
+factor_genes_names_df <- bind_rows(factor_genes_names_df, .id = "factor")
+
+# factor_graphs
+
+# ├── Factor1
+# │   ├── up   -> igraph object for Factor1 increased condition
+# │   └── down -> igraph object for Factor1 decreased condition
+# ├── Factor2
+# │   ├── up   -> igraph object for Factor2 increased condition
+# │   └── down -> igraph object for Factor2 decreased condition
+# └── Factor3
+# ├── up   -> igraph object for Factor3 increased condition
+# └── down -> igraph object for Factor3 decreased condition
 
 get_nodes<-function(igraph_object){
   nodes<-V(igraph_object)$name
@@ -72,8 +99,6 @@ get_nodes<-function(igraph_object){
 factor_nodes <- lapply(factor_graphs, function(sublist) {
   sapply(sublist, get_nodes)
 })
-
-
 
 enr_nodes<-function(nodes_vec, m_t2g, universe=NULL){
   enr_out<-enricher(nodes_vec, TERM2GENE = m_t2g)
@@ -96,14 +121,15 @@ enr_nodes<-function(nodes_vec, m_t2g, universe=NULL){
 # CP:KEGG (KEGG Legacy gene sets, 186 gene sets)
 
 msig_cat<-"C2"
-sub_cat<-"CP:REACTOME"
+sub_cat<-"CP:KEGG"
 m_t2g <- msigdbr(species = "Homo sapiens", category = msig_cat, subcategory = sub_cat) %>% 
   dplyr::select(gs_name, human_gene_symbol)
 colnames(m_t2g) <- c("term", "name")
+
+factor_nodes <- lapply(factor_nodes, function(x){unique(unname(unlist(x)))})
 #get nodes from all graphs
-factor_enr <- lapply(factor_nodes, function(sublist) {
-  sapply(sublist, enr_nodes, m_t2g, universe)
-})
+factor_enr <- sapply(factor_nodes, enr_nodes, m_t2g, universe)
+test <- data.frame(factor_enr$Factor3)
 
 #graph construction
 
