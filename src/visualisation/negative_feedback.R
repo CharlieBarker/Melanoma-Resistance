@@ -45,6 +45,41 @@ proteins_of_interest_to_ARID1A<-list(
   OBSCN="Q5VST9"
 )
 
+# Create a list of proteins of interest to ARID1A with their respective UniProt IDs
+sorger_feedback <- list(
+  # RAS family proteins
+  HRAS="P01112",   # HRas protein
+  KRAS="P01116",   # KRas protein
+  NRAS="P01111",   # NRas protein
+  
+  # MAPK pathway components
+  ARAF="P10398",   # A-Raf proto-oncogene serine/threonine-protein kinase
+  BRAF="P15056",   # B-Raf proto-oncogene serine/threonine-protein kinase
+  RAF1="P04049",   # Raf-1 proto-oncogene serine/threonine-protein kinase
+  MAP2K1="Q02750", # Mitogen-activated protein kinase kinase 1 (MEK1)
+  MAP2K2="P36507", # Mitogen-activated protein kinase kinase 2 (MEK2)
+  MAPK3="P27361",  # Mitogen-activated protein kinase 3 (ERK1)
+  MAPK1="P28482",  # Mitogen-activated protein kinase 1 (ERK2)
+  
+  # Negative feedback regulators of MAPK
+  DUSP4="Q13115",  # Dual specificity protein phosphatase 4
+  DUSP6="Q16828",  # Dual specificity protein phosphatase 6
+  
+  # Negative feedback regulators of EGFR
+  ERRFI1="Q9UJM3", # ERBB receptor feedback inhibitor 1
+  SPRY4="Q9C004",  # Protein sprouty homolog 4
+  SPRY2="O43597",  # Protein sprouty homolog 2
+  
+  # EGFR pathway components
+  EGFR="P00533",   # Epidermal growth factor receptor
+  GRB2="P62993",   # Growth factor receptor-bound protein 2
+  CBL="P22681",    # E3 ubiquitin-protein ligase CBL
+  SHC1="P29353",   # SHC-transforming protein 1
+  PTPN11="Q06124", # Tyrosine-protein phosphatase non-receptor type 11
+  SOS1="Q07889"    # Son of sevenless homolog 1
+)
+
+
 # Define the drugs and their corresponding colors
 drug_colors <- c(
   "Untreated" = "#A2AEBB",
@@ -52,8 +87,8 @@ drug_colors <- c(
   "Trametinib" = "#D00000",
   "Combination" = "#3F88C5"
 )
-proteins_df<-melt(all_abundace$protein[all_abundace$protein$X %in% unname(proteins_of_interest_to_ARID1A),])
-rna_df<-melt(all_abundace$rna[all_abundace$rna$X %in% names(proteins_of_interest_to_ARID1A),])
+proteins_df<-melt(all_abundace$protein[all_abundace$protein$X %in% unname(sorger_feedback),])
+rna_df<-melt(all_abundace$rna[all_abundace$rna$X %in% names(sorger_feedback),])
 replacement_Vec<-c("Untreated","Vermurafenib_1uM","Trametinib_10nM","vemurafenib_and_trametinib")
 names(replacement_Vec)<- c("Untreated", "Vemurafenib", "Trametinib", "Combination")
 
@@ -87,7 +122,7 @@ split_exp_conditions<-function(df, error=F){
 
 proteins_df<-split_exp_conditions(proteins_df)
 rna_df<-split_exp_conditions(rna_df)
-rna_df$X <- factor(rna_df$X, levels = c("FGF1", "FGF2", "FGFR1", "EGFR", "KDR", "DUSP10", "OBSCN", "MAP3K5"))
+rna_df$X <- factor(rna_df$X, levels = names(sorger_feedback))
 
 pdf(file = "~/Desktop/Melanoma_Resistance/results/vis/Factor3/factor3_rna.pdf",   # The directory you want to save the file in
     width = 18, # The width of the plot in inches
@@ -113,46 +148,16 @@ rna_df %>%
 
 dev.off()
 
-rna_wt<-proteins_df#[rna_df$ko=="WT",]
 
 
 # Step 1: Call the pdf command to start the plot
 pdf(file = "~/Desktop/Melanoma_Resistance/results/vis/Factor1/negative_feedback.pdf",   # The directory you want to save the file in
-    width = 6, # The width of the plot in inches
+    width = 16, # The width of the plot in inches
     height = 6) # The height of the plot in inches
 
-# Step 2: Create the plot with R code
-ggplot(rna_wt) +
-  geom_bar(aes(x = drug, y = mean, fill = drug), stat = "identity", alpha = 0.5) +
-  geom_errorbar(aes(x = drug, ymin = mean - ic, ymax = mean + ic), width = 0.4, colour = "orange", alpha = 0.9, size = 1.5) +
-  cowplot::theme_cowplot() +
-  facet_grid(X~ko, scales = "free") +
-  scale_fill_manual(values = drug_colors) +
-  labs(y = "RNA abundance") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-  geom_hline(yintercept = 0, linetype = 'dotted', col = 'red') +
-  theme(axis.text.x = element_text(size = 12, hjust = 1),
-        strip.text = element_text(size = 8),
-        strip.background = element_rect(fill = "lightgray", color = "gray", linewidth = 0.5),
-        panel.border = element_rect(color = "gray", linewidth = 0.5))
-# Step 3: Run dev.off() to create the file!
-dev.off()
 
-ggplot(proteins_df) +
-  geom_bar(aes(x = drug, y = mean, fill = drug), stat = "identity", alpha = 0.5) +
-  geom_errorbar(aes(x = drug, ymin = mean - ic, ymax = mean + ic), width = 0.4, colour = "orange", alpha = 0.9, size = 1.5) +
-  cowplot::theme_cowplot() +
-  facet_grid(X~ko, scales = "free") +
-  scale_fill_manual(values = drug_colors) +
-  labs(y = "RNA abundance") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-  theme(axis.text.x = element_text(size = 12, hjust = 1),
-        strip.text = element_text(size = 8),
-        strip.background = element_rect(fill = "lightgray", color = "gray", linewidth = 0.5),
-        panel.border = element_rect(color = "gray", linewidth = 0.5))
-
-proteins_df %>%
-  ggplot( aes(x=ko, y=value, fill=drug)) +
+rna_df %>%
+  ggplot( aes(x=X, y=value, fill=drug)) +
   geom_boxplot() +
   geom_jitter(color="black", size=0.4, alpha=0.9) +
   scale_fill_manual(values = drug_colors) +
@@ -162,5 +167,23 @@ proteins_df %>%
   ) +
   ggtitle("mRNA abundances of central RTKs") +
   xlab("") + cowplot::theme_cowplot() +
-  facet_wrap(~X, scales = "free_y")
+  facet_wrap(~ko, scales = "free_y", nrow = 2)
+
+proteins_df$gene_name<- names(sorger_feedback)[match(proteins_df$X, unname(sorger_feedback))]
+proteins_df$gene_name <- factor(proteins_df$gene_name, levels = names(sorger_feedback))
+
+proteins_df %>%
+  ggplot( aes(x=gene_name, y=value, fill=drug)) +
+  geom_boxplot() +
+  geom_jitter(color="black", size=0.4, alpha=0.9) +
+  scale_fill_manual(values = drug_colors) +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=11)
+  ) +
+  ggtitle("Protein abundances of central RTKs") +
+  xlab("") + cowplot::theme_cowplot() +
+  facet_wrap(~ko, scales = "free_y", nrow = 2)
+
+dev.off()
 
