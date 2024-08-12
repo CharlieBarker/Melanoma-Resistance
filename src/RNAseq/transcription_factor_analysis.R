@@ -68,7 +68,8 @@ for (acts_file in tf_files) {
 df <- do.call("rbind", vol_plot_list)
 rownames(df)<-NULL
 
-jun_tfs<-df#[grepl(df$TF, pattern = "JUN"),]
+jun_tfs<-df[grepl(df$exp, pattern = "Untreated_WT_vs_") | 
+              grepl(df$exp, pattern = "Untreated_ARID1A_KO_vs_"),]
 pal <- wes_palette("Zissou1", 100, type = "continuous")
 
 # Add 'genetics' and 'drug_treatment' columns
@@ -137,8 +138,8 @@ file_paths <- list.files(path = "./results/transcriptomics/", pattern = "*.csv",
 extract_info <- function(filename) {
   parts <- strsplit(filename, "_vs_|_lfc.csv")[[1]]
   list(
-    file = parts[1],
-    exp = parts[2],
+    control = parts[1],
+    test = parts[2],
     genetic_ko = ifelse(grepl("ARID1A", parts[1]), "ARID1A_KO", "WT"),
     drug = gsub("_ARID1A_KO|_WT", "", parts[2])
   )
@@ -153,8 +154,8 @@ for (file_path in file_paths) {
   info <- extract_info(file_path)
   data <- data %>%
     mutate(
-      file = info$file,
-      exp = info$exp,
+      control = basename(info$control),
+      test = info$test,
       genetic_ko = info$genetic_ko,
       drug = info$drug
     )
@@ -163,6 +164,34 @@ for (file_path in file_paths) {
 
 # Combine all data frames into one
 combined_df <- bind_rows(dfs)
+#look at HLAs
+hla_df<-combined_df[grep(combined_df$gene_symbol, pattern="HLA"),]
+hla_df$diffexpressed <- "Not significant"
+hla_df$label <- ""
+
+hla_df$diffexpressed[hla_df$padj < 0.1 & hla_df$log2FoldChange < 0] <- "Downregulated"
+hla_df$diffexpressed[hla_df$padj < 0.1 & hla_df$log2FoldChange > 0] <- "Upregulated"
+hla_df$label[hla_df$diffexpressed != "Not significant"] <- hla_df$gene_symbol[hla_df$diffexpressed != "Not significant"]
+
+hla_df$control <- str_remove_all(hla_df$control, pattern = "_WT")
+hla_df$control <- str_remove_all(hla_df$control, pattern = "_ARID1A_KO")
+
+hla_df$test <- str_remove_all(hla_df$test, pattern = "_WT")
+hla_df$test <- str_remove_all(hla_df$test, pattern = "_ARID1A_KO")
+
+ggplot(data = hla_df, aes(x = log2FoldChange, y = -log10(padj), col = diffexpressed, label = label)) + 
+  geom_vline(xintercept = c(-0.6, 0.6), col = "gray", linetype = 'dashed') + 
+  geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') + 
+  geom_point(size = 2) + 
+  scale_color_manual(values = c("#00AFBB", "grey", "#bb0c00"), # to set the colours of our variable 
+                     labels = c("Downregulated", "Not significant", "Upregulated")) + # to set the labels in case we want to overwrite the categories from the dataframe (UP, DOWN, NO) 
+  labs(color = 'Severe', #legend_title, 
+       x = expression("log"[2]*"FC"), y = expression("-log"[10]*"p-value")) + 
+  scale_x_continuous(breaks = seq(-10, 10, 2)) + # to customise the breaks in the x axis 
+  ggtitle('Expression of HLA proteins across different conditions') + # Plot title 
+  geom_text_repel(max.overlaps = Inf) + # To show all labels
+  facet_grid(genetic_ko~control+test)
+
 
 plot_expression <- combined_df %>%
   dplyr::select(-exp, -file, -baseMean, -lfcSE, -stat, -pvalue)  %>% 

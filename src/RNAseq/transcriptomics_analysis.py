@@ -24,7 +24,7 @@ collectri = dc.get_collectri(organism='human', split_complexes=False)
 # We can extract the specific lines of regulons of interest for further analysis 
 
 # Define the targets of interest
-targets_of_interest = ['MYC', 'AP1', 'JUN']
+targets_of_interest = ['MYC', 'AP1', 'JUN', 'E2F1']
 
 # Filter the DataFrame to include only the rows where the target is in the targets_of_interest list
 filtered_df = collectri[collectri['source'].isin(targets_of_interest)]
@@ -110,6 +110,8 @@ contrasts = [
     ("Untreated WT", "Vermurafenib-1uM WT"),
     ("Untreated WT", "Trametinib-10nM WT"),
     ("Untreated WT", "vemurafenib-and-trametinib WT"),
+    ("Vermurafenib-1uM WT", "vemurafenib-and-trametinib WT"),
+    ("Trametinib-10nM WT", "vemurafenib-and-trametinib WT"),
     ("Untreated ARID1A-KO", "Vermurafenib-1uM ARID1A-KO"),
     ("Untreated ARID1A-KO", "Trametinib-10nM ARID1A-KO"),
     ("Untreated ARID1A-KO", "vemurafenib-and-trametinib ARID1A-KO")
