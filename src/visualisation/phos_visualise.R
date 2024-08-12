@@ -36,7 +36,7 @@ drug_colors <- c(
 
 # Define vector of proteins of interest
 #Factor 1
-prot_of_interest <- c("ERBB3", "BCAR3", "SPRED1", "ARHGEF2", "ABL2", "RRAGC")
+prot_of_interest <- V(subnet)$Gene_name
 
 # Initialize an empty list to store filtered data for each protein
 filtered_data <- list()
@@ -73,22 +73,30 @@ rtk_mrna$drug <- factor(rtk_mrna$drug, levels = desired_order)
 #         upper = list(continuous = "points")) + cowplot::theme_cowplot()+grids(linetype = "dashed") +  scale_fill_manual(values = drug_colors) +  scale_color_manual(values = drug_colors)
 # 
 
+pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/plots/phospho_sites_Factor2.pdf"), 
+    width = 20, height = 40)
+
 molten_rtk_mrna<-reshape2::melt(rtk_mrna)
+# Define the desired order of levels
+desired_order <- c("Untreated", "Vemurafenib", "Trametinib", "Combination")
+# Convert my_column to a factor with the specified order
+molten_rtk_mrna$drug <- factor(molten_rtk_mrna$drug, levels = desired_order)
 molten_rtk_mrna %>%
-  filter(ko == "WT")  %>%
-  ggplot( aes(x=drug, y=value, fill=drug)) +
+  ggplot( aes(x=drug, y=value, fill=ko)) +
   geom_boxplot() +
   geom_jitter(color="black", size=0.4, alpha=0.9) +
-  scale_fill_manual(values = drug_colors) +
+  scale_fill_manual(values = gene_colours) +
   cowplot::theme_cowplot() +
   theme(
-    plot.title = element_text(size=11),
+    plot.title = element_text(size=18),
     axis.text.x = element_text(angle = 70, hjust = 1, size = rel(1)),
   ) +
   xlab("") +
-  facet_wrap(~variable, scales = "free_y", nrow = 2) + 
+  facet_wrap(~variable, scales = "free") + 
   grids(linetype = "dashed")+
   labs(
     x = "Drug treatment",
-    y = "Psite abundance",
+    y = "Psite abundance ",
+    title = "difference in psite abundance"
   )
+dev.off()

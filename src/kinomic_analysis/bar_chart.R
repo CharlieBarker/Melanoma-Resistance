@@ -99,7 +99,8 @@ complete_results$experiment <- gsub("^ARID1A ", "", complete_results$experiment)
 complete_results$experiment <- gsub(".xlsx$", "", complete_results$experiment)
 
 complete_results$experiment <- factor(complete_results$experiment, levels = c("Vemurafenib vs Untreated", "Trametinib vs Untreated", "Combined vs Untreated",
-                                                                            "Combined vs Vemurafenib", "Combined vs Trametinib"))
+                                                                            "Combined vs Vemurafenib", "Combined vs Trametinib", 
+                                                                            "Combined ARID1A vs WT", "Trametinib ARID1A vs WT", "Vemurafenib ARID1A vs WT", "Untreated ARID1A vs WT"))
 
 drug_targets<-complete_results[complete_results$`Kinase Name` %in% c("ERK1", "BRAF", "PKD1", "JNK1", "JNK2", "JNK3"),]
 drug_targets<-drug_targets[!grepl(drug_targets$experiment, pattern="ARID1A"),]
@@ -172,7 +173,7 @@ factor2_ids <- rownames(stack(factor_nodes$Factor2))
 
 # Classify Kinase Uniprot IDs
 to_plot_box <- complete_results %>%
-  filter(arid1a_status == "WT") %>%
+  dplyr::filter(arid1a_status == "WT") %>%
   mutate(
     factor_network = case_when(
       `Kinase Uniprot ID` %in% factor1_ids & `Kinase Uniprot ID` %in% factor2_ids ~ "both",
@@ -223,7 +224,7 @@ plot<-plot +
 
 
 # Save the plot to a PDF file
-ggsave("./paper/plots/kinomics_barplot.pdf", plot, width = 30, height = 30, units = "in")
+ggsave("./paper/plots/kinomics_STK_barplot.pdf", plot, width = 30, height = 30, units = "in")
 
 
 
@@ -235,7 +236,7 @@ plot <- ggplot(ARID1A_KO) +
                     ymin = `Median Kinase Statistic` - `SD Kinase Statitistic`, 
                     ymax = `Median Kinase Statistic` + `SD Kinase Statitistic`), 
                 width = 0.4, colour = "orange", alpha = 0.9, size = 1.3) + 
-  facet_wrap( ~ experiment, scales = "free") +
+  facet_wrap( ~ experiment, ncol = 2) + 
   labs(x = "Kinase Name", y = "Median Kinase Statistic") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
@@ -247,72 +248,5 @@ plot<-plot +
                 label = "*"), 
             vjust = 0, size = 3, color = "red", fontface = "bold")
 # Save the plot to a PDF file
-ggsave("./paper/plots/ARID1A_KO_barplot.pdf", plot, width = 30, height = 30, units = "in")
+ggsave("./paper/plots/ARID1A_KO_STK_barplot.pdf", plot, width = 20, height = 40, units = "in")
 
-
-
-# Most basic error bar
-ggplot(ARID1A_KO) +
-  geom_bar( aes(x=name, y=value), stat="identity", fill="skyblue", alpha=0.7) +
-  geom_errorbar( aes(x=name, ymin=value-sd, ymax=value+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)
-
-
-
-library(tidyr)
-
-# Assuming `complete_results` is your original data frame
-
-# Pivot the data frame to wide format based on experiment
-wide_results <- pivot_wider(
-  data = complete_results,
-  id_cols = c(`Kinase Uniprot ID`, `Kinase Name`),
-  names_from = experiment,
-  values_from = `Mean Kinase Statistic`,
-  names_prefix = "Mean Kinase Statistic "
-)
-# 
-# 
-# library(tidyr)
-# library(ggplot2)
-# library(dplyr)
-# library(ggpubr)
-# library(GGally)
-# library(purrr)
-# library(ghibli)
-# library(patchwork)
-# library(ggExtra)
-# 
-# ghibli_cs<-"MononokeMedium"
-# 
-# nCOL<-ncol(wide_results)
-# ggpairs(wide_results,                 # Data frame
-#         columns = 3:nCOL)
-# 
-# 
-# g1 <- ggplot(df2, aes(Encorafinib, Trametinib, colour = annot)) +
-#   geom_point() + cowplot::theme_cowplot() + 
-#   geom_hline(yintercept=0, linetype='dotted', col = 'darkred')+
-#   geom_vline(xintercept=0, linetype='dotted', col = 'darkred')+
-#   scale_color_ghibli_d("YesterdayMedium", direction = -1)+ 
-#   theme(legend.position="none")+
-#   xlab("Encorafinib (BRAF inhibitor)") + ylab("Trametinib (MAP2K1 inhibitor)")
-# new1<-ggMarginal(g1,type = "histogram", groupColour = TRUE, groupFill = TRUE)
-# 
-# g2 <- ggplot(df2, aes(Neratinib, Trametinib, colour = annot)) +
-#   geom_point() + cowplot::theme_cowplot() + 
-#   geom_hline(yintercept=0, linetype='dotted', col = 'darkred')+
-#   geom_vline(xintercept=0, linetype='dotted', col = 'darkred')+
-#   scale_color_ghibli_d("YesterdayMedium", direction = -1)+ 
-#   theme(legend.position="none")+
-#   xlab("Neratinib (EGFR inhibitor)") + ylab("Trametinib (MAP2K1 inhibitor)")
-# new2<-ggMarginal(g2,type = "histogram", groupColour = TRUE, groupFill = TRUE)
-# 
-# g3 <- ggplot(df2, aes(AZ5363, Trametinib, colour = annot)) +
-#   geom_point() + cowplot::theme_cowplot() + 
-#   geom_hline(yintercept=0, linetype='dotted', col = 'darkred')+
-#   geom_vline(xintercept=0, linetype='dotted', col = 'darkred')+
-#   scale_color_ghibli_d("YesterdayMedium", direction = -1)+ 
-#   theme(legend.position="none")+
-#   xlab("AZ5363 (AKT inhibitor)") + ylab("Trametinib (MAP2K1 inhibitor)")
-# new3<-ggMarginal(g3,type = "histogram", groupColour = TRUE, groupFill = TRUE)
-# 

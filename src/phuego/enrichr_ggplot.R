@@ -24,7 +24,7 @@ pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/for_su
 # basic scatterplot
 ggplot(enrichr_bioplanet2019, aes(x=odds_ratio, y=log_pval, label=label)) + 
   geom_point() +
-  ggrepel::geom_text_repel() + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 2) + cowplot::theme_cowplot()
 dev.off()
 
 #check the immune in the combination. 

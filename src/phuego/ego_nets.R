@@ -246,6 +246,11 @@ for (factor in factorS) {
 
 g<-union_factor_graphs[[factor_to_vis]]
 
+g1<-union_factor_graphs[["Factor1"]]
+g2<-union_factor_graphs[["Factor2"]]
+g3<-union_factor_graphs[["Factor3"]]
+
+
 conv_nodes<-data.frame(uniprt=V(g)$name,
                        gene_name=V(g)$Gene_name)
 
