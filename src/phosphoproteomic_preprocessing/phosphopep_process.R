@@ -80,16 +80,56 @@ SiteSequence = sapply(names(sequence_to_psite), function(x) {
   fragment
 })
 
+#transform into a phosX-readable format 
+# Function to transform peptide sequences
+transform_peptide <- function(sequence) {
+  # Identify the position of the phosphorylated residue
+  pos <- regexpr("[st]\\*", sequence)
+  if (pos == -1) return(NULL)
+  
+  # Remove the '*' to get the clean peptide sequence
+  clean_sequence <- gsub("\\*", "", sequence)
+  
+  # Calculate start and end positions for centering
+  start_pos <- pos - 5
+  end_pos <- pos + 4
+  
+  # Pad the sequence with underscores if start_pos is less than 1 or end_pos is greater than the length of the sequence
+  if (start_pos < 1) {
+    clean_sequence <- paste0(strrep("_", 1 - start_pos), clean_sequence)
+    start_pos <- 1
+    end_pos <- start_pos + 9
+  }
+  
+  if (end_pos > nchar(clean_sequence)) {
+    clean_sequence <- paste0(clean_sequence, strrep("_", end_pos - nchar(clean_sequence)))
+  }
+  
+  # Extract the relevant part of the sequence
+  centered_sequence <- substr(clean_sequence, start_pos, end_pos)
+  
+  return(centered_sequence)
+}
+
+# Apply the transformation to all peptides
+transformed_peptides <- sapply(SiteSequence, transform_peptide)
+transformed_peptides_df<-stack(transformed_peptides)
+# write_delim(x = transformed_peptides_df,
+#             file = "~/Desktop/Melanoma_Resistance/data/proteomic/psite_dict.csv",
+#             col_names = F, 
+#             delim = ",")
 
 prot_mapper<-data.frame(ID=unlist(map(str_split(unlist(map(str_split(string = rownames(to_study),
                                                                      pattern = "__"), 2)), pattern = "\\s"), 1)),
                         type="uniprot",
                         AA=gsub('[[:digit:]]+', '', unlist(map(str_split(rownames(to_study), pattern = "__"), 3))),
                         residue=as.integer(parse_number(unlist(map(str_split(to_study$future_rownames, pattern = ";"), 2)))))
+
 # write_delim(x = prot_mapper,
 #             file = "~/MelanomaProject/data/prot_mapper_input.csv",
 #             col_names = F, 
 #             delim = ",")
+
 
 to_study<-aggregate(. ~ future_rownames, data=to_study, FUN=sum)
 rownames(to_study)<-to_study$future_rownames
