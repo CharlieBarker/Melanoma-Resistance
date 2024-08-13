@@ -148,7 +148,7 @@ for (factor in factorS) {
   
 }
 
-largest_component_graph <- super_graph_up
+largest_component_graph <- super_graph
 
 library(ggraph)
 library(igraph)
@@ -199,7 +199,7 @@ facetted_graph <- ggraph(largest_component_graph, layout = l) +
 
 
 
-pdf("./paper/plots/phuego_facetted_up.pdf", width = 8, height = 6)
+pdf("./paper/plots/phuego_facetted_big.pdf", width = 8, height = 6)
 big_graph
 facetted_graph
 # Get network greyed out
@@ -232,5 +232,27 @@ ggraph(largest_component_graph, layout = l ) +
         plot.margin = unit(c(0,0,0,0), 'lines')) + 
   scale_colour_manual(values=c("lightgrey", "#92bbd9ff")) +
   ggtitle("graph showing factor 1 highlighted")
+
+V(largest_component_graph)$is_subgraph = V(largest_component_graph)$factor == "Factor 2 (Combination Specific)"
+ggraph(largest_component_graph, layout = l ) + 
+  geom_edge_link(alpha=0.3) + 
+  geom_node_point(aes(colour=is_subgraph), size = 2) +
+  coord_fixed() +
+  theme_graph(base_family = "sans",base_size = 12)+  
+  theme(legend.position = "none",
+        plot.margin = unit(c(0,0,0,0), 'lines')) + 
+  scale_colour_manual(values=c("lightgrey", "#92bbd9ff")) +
+  ggtitle("graph showing factor 2 highlighted")
+
+V(largest_component_graph)$is_subgraph = V(largest_component_graph)$factor == "Factor 3 (ARID1A rewired)"
+ggraph(largest_component_graph, layout = l ) + 
+  geom_edge_link(alpha=0.3) + 
+  geom_node_point(aes(colour=is_subgraph), size = 2) +
+  coord_fixed() +
+  theme_graph(base_family = "sans",base_size = 12)+  
+  theme(legend.position = "none",
+        plot.margin = unit(c(0,0,0,0), 'lines')) + 
+  scale_colour_manual(values=c("lightgrey", "#92bbd9ff")) +
+  ggtitle("graph showing factor 3 highlighted")
 
 dev.off()

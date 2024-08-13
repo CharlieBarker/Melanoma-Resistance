@@ -96,24 +96,38 @@ plot_data <- jun_tfs %>%
   pivot_wider(names_from = genetics, values_from = c(logFC, padj), names_sep = "_") %>%
   dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
 
+# Define the function
+generate_tf_activity_plot <- function(data, tf, output_file) {
+  # Filter the data for the specified TF
+  tf_data <- data[data$TF == tf,]
+  
+  # Create the ggplot
+  tf_plot <- ggplot(tf_data, aes(x = drug_treatment, y = logFC, fill = genetics)) +
+    geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    theme_minimal() +
+    labs(title = paste("Log Fold Change of", tf, "Gene Under Different Conditions"),
+         x = "Drug Treatment",
+         y = "logFC",
+         fill = "Genetics") +
+    theme_cowplot() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  # Save the plot as a PDF
+  pdf(file = output_file, width = 12, height = 6)
+  print(tf_plot)
+  dev.off()
+}
 
-myc_tfs<-jun_tfs[jun_tfs$TF=="MYC",]
+# Example usage for MYC
+generate_tf_activity_plot(jun_tfs, "MYC", "~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_myc.pdf")
 
-# Create a ggplot
-myc_plot <- ggplot(myc_tfs, aes(x = drug_treatment, y = logFC, fill = genetics)) +
-  geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  theme_minimal() +
-  labs(title = "Log Fold Change of MYC Gene Under Different Conditions",
-       x = "Drug Treatment",
-       y = "logFC",
-       fill = "Genetics") +
-  theme_cowplot() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_myc.pdf"), 
-    width = 12, height = 6)
-myc_plot
-dev.off()
+# Example usage for JUN
+generate_tf_activity_plot(jun_tfs, "JUN", "~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_jun.pdf")
+
+# Example usage for AP1
+generate_tf_activity_plot(jun_tfs, "AP1", "~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_ap1.pdf")
+
 
 plot_data$label = ""
 both_sig<-plot_data$padj_ARID1A < 0.001 | plot_data$padj_WT < 0.001

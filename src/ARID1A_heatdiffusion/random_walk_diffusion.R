@@ -251,12 +251,7 @@ weights <- get_weights(MOFAobject.trained,
                        views = "all", 
                        as.data.frame = TRUE 
 )
-#for clarity swap Factor1 so it means going down with treatment
-weights[weights$factor=="Factor1",]$value<-weights[weights$factor=="Factor1",]$value * -1
-new_up<-factor_graphs$Factor1$down
-new_down<-factor_graphs$Factor1$up
-factor_graphs$Factor1$down<-new_down
-factor_graphs$Factor1$up<-new_up
+
 
 weights$node<-unlist(map(str_split(weights$feature, pattern = "_"),1))
 weights$node<-unlist(map(str_split(weights$node, pattern = ";"),1))
@@ -477,11 +472,11 @@ process_receptors_lfc<-function(file, receptor_list, g){
   mRNA_lfc<-read.csv(file = file)
   gene_affected <- mRNA_lfc[mRNA_lfc$X %in% V(g)$Gene_name,]
   receptors_affected <- gene_affected[gene_affected$X %in% receptors,]
-  receptors_affected <- receptors_affected[receptors_affected$adj.P.Val<0.001,]
+  receptors_affected <- receptors_affected[receptors_affected$adj.P.Val<0.01,]
   return(receptors_affected)
 }
 
-combined_lfc<-process_receptors_lfc(file = "./results/lfc/mRNA/vemurafenib_lfc.csv",
+combined_lfc<-process_receptors_lfc(file = "./results/lfc/mRNA/combination_lfc.csv",
                                     receptor_list = receptors,
                                     g= g)
 
@@ -503,6 +498,7 @@ normalize_vector <- function(vec) {
   
   return(normalized_vec)
 }
+
 # Perform a random walk and get stationary distribution
 perform_random_walk <- function(graph, start_vector) {
   adj_matrix <- as_adjacency_matrix(graph)
@@ -650,3 +646,29 @@ ggplot(L_df, aes(x=arid1a_down_probabilities, y=combined_up_probabilities, label
 dev.off()
 
 
+# Function to convert vector to binary matrix
+vector_to_binary_matrix <- function(vec) {
+  # Find indices of non-zero elements
+  nonzero_indices <- which(vec != 0)
+  
+  # Number of non-zero elements
+  num_nonzero <- length(nonzero_indices)
+  
+  # Create an empty matrix
+  result_matrix <- matrix(0, nrow = length(vec), ncol = num_nonzero)
+  
+  # Populate the matrix
+  for (i in 1:num_nonzero) {
+    result_matrix[nonzero_indices[i], i] <- 1
+  }
+  
+  # Return the resulting matrix
+  return(result_matrix)
+}
+
+to_test<-combined_down_receptors
+test<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
+
+test[test$L_df.Gene_name %in% c("JUN", "PRKD1"),]
+
+L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
