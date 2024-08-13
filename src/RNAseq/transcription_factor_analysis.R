@@ -84,6 +84,7 @@ jun_tfs <- jun_tfs %>%
       grepl("Trametinib", exp) ~ "Untreated vs Trametinib",
       grepl("vemurafenib_and_trametinib", exp) ~ "Untreated vs Combination therapy",
       grepl("Vermurafenib", exp) ~ "Untreated vs Vemurafenib",
+      grepl("Untreated_WT_vs_Untreated_ARID1A_KO", exp) ~ "Untreated vs ARID1A KO",
       TRUE ~ NA_character_
     )
   )
@@ -94,6 +95,25 @@ plot_data <- jun_tfs %>%
   dplyr::select(-exp)  %>% 
   pivot_wider(names_from = genetics, values_from = c(logFC, padj), names_sep = "_") %>%
   dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
+
+
+myc_tfs<-jun_tfs[jun_tfs$TF=="MYC",]
+
+# Create a ggplot
+myc_plot <- ggplot(myc_tfs, aes(x = drug_treatment, y = logFC, fill = genetics)) +
+  geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_minimal() +
+  labs(title = "Log Fold Change of MYC Gene Under Different Conditions",
+       x = "Drug Treatment",
+       y = "logFC",
+       fill = "Genetics") +
+  theme_cowplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_myc.pdf"), 
+    width = 12, height = 6)
+myc_plot
+dev.off()
 
 plot_data$label = ""
 both_sig<-plot_data$padj_ARID1A < 0.001 | plot_data$padj_WT < 0.001
@@ -194,7 +214,7 @@ ggplot(data = hla_df, aes(x = log2FoldChange, y = -log10(padj), col = diffexpres
 
 
 plot_expression <- combined_df %>%
-  dplyr::select(-exp, -file, -baseMean, -lfcSE, -stat, -pvalue)  %>% 
+  dplyr::select(-baseMean, -lfcSE, -stat, -pvalue)  %>% 
   pivot_wider(names_from = genetic_ko, values_from = c(log2FoldChange, padj), names_sep = "_") %>%
   dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
 # Create the linear model
