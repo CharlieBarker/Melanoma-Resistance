@@ -17,8 +17,9 @@ library(EnsDb.Hsapiens.v86)
 library(tidyr)
 library(MOFA2)
 library(ggConvexHull)
-
-
+seed<-runif(n = 1, min = 1, max = 1000)
+set.seed(478.073)
+print(seed) #301.3149
 knitr::opts_chunk$set(dev = "ragg_png")
 
 # Set environment and working directory
@@ -121,73 +122,6 @@ collapsed_factor_weights <- factor_weights %>%
   group_by(node) %>%
   summarise(value = sum(value))
 
-# Define the centrality_plot function with an additional title parameter
-centrality_plot <- function(graph_in, title, factor_weights) {
-  # Get centrality
-  centrality_out <- page.rank(graph_in)
-  centrality_df <- stack(centrality_out$vector)
-  
-  # Order and rank centrality
-  centrality_df <- centrality_df[order(centrality_df$values, decreasing = TRUE), ]
-  centrality_df$rank <- 1:nrow(centrality_df)
-  
-  # Retrieve gene names
-  genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = as.character(centrality_df$ind), 
-                                       keytype = "UNIPROTID", 
-                                       columns = "GENENAME")
-  centrality_df$names <- genename_df$GENENAME[match(centrality_df$ind, genename_df$UNIPROTID)]
-  
-  centrality_df$factor_weight <- factor_weights$value[match(centrality_df$names, factor_weights$node)]
-  
-  centrality_df$names[centrality_df$rank > 10] <- ""
-  
-  # Create the plot with the given title
-  pal <- wes_palette("Zissou1", 100, type = "continuous")
-  # Define your plot with ggplot
-  out <- ggplot(centrality_df, aes(x = rank, y = values, label = names, colour = factor_weight)) + 
-    geom_point() + 
-    cowplot::theme_cowplot() + 
-    geom_text_repel(colour = "black") +
-    scale_colour_gradientn(colours = pal) + 
-    ggtitle(title) +  # Add the plot title
-    labs(x = "Rank in network", y = "Centrality (PageRank)") +  # Adding axis titles
-    theme(legend.position = "bottom")  # Placing legend at the bottom
-  
-  
-  return(centrality_df)
-}
-
-# Create the centrality plots with titles
-factor1_up_centrality<-centrality_plot(factor_graphs[[factor_to_vis]]$up, paste0(factor_to_vis, " Up - Centrality Plot"), collapsed_factor_weights) 
-factor1_down_centrality<-centrality_plot(factor_graphs[[factor_to_vis]]$down, paste0(factor_to_vis, " Down - Centrality Plot"), collapsed_factor_weights)
-factor_centrality<-rbind(factor1_up_centrality, factor1_down_centrality)
-
-
-# Order and rank centrality
-factor_centrality <- factor_centrality[order(factor_centrality$values, decreasing = TRUE), ]
-factor_centrality$rank <- 1:nrow(factor_centrality)
-
-# Retrieve gene names
-genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = as.character(factor_centrality$ind), 
-                                     keytype = "UNIPROTID", 
-                                     columns = "GENENAME")
-factor_centrality$names <- genename_df$GENENAME[match(factor_centrality$ind, genename_df$UNIPROTID)]
-
-factor_centrality$names[factor_centrality$rank > 30] <- ""
-
-centrality_plots<-ggplot(factor_centrality, aes(x = rank, y = values, label = names)) + 
-  geom_point() + 
-  cowplot::theme_cowplot() + 
-  geom_text_repel(colour = "black", force = 15) +
-  scale_colour_gradientn(colours = pal) + 
-  labs(x = "Rank in network", y = "Centrality (PageRank)", 
-       title = "Centrality of Network describing combination-specific changes") +  # Adding axis titles
-  theme(legend.position = "bottom", plot.title = element_text(size=10))  # Placing legend at the bottom
-
-
-
-
-
 union2<-function(g1, g2){
   
   #Internal function that cleans the names of a given attribute
@@ -243,24 +177,6 @@ for (factor in factorS) {
   union_factor_graphs[[factor]] <- union2(up_graph, down_graph)
 }
 
-
-#get mofa weights 
-MOFAobject.trained<-load_model(file = "./results/mofa/mofa_object.hdf5")
-
-weights <- get_weights(MOFAobject.trained, 
-                       views = "all", 
-                       as.data.frame = TRUE 
-)
-
-
-weights$node<-unlist(map(str_split(weights$feature, pattern = "_"),1))
-weights$node<-unlist(map(str_split(weights$node, pattern = ";"),1))
-factor_weights<-weights[weights$factor == factor_to_vis,]
-# Collapse the data frame by summing the value for each node
-collapsed_factor_weights <- factor_weights %>%
-  group_by(node) %>%
-  summarise(value = sum(value))
-
 # Define the centrality_plot function with an additional title parameter
 centrality_plot <- function(graph_in, title, factor_weights) {
   # Get centrality
@@ -276,23 +192,8 @@ centrality_plot <- function(graph_in, title, factor_weights) {
                                        keytype = "UNIPROTID", 
                                        columns = "GENENAME")
   centrality_df$names <- genename_df$GENENAME[match(centrality_df$ind, genename_df$UNIPROTID)]
-  
   centrality_df$factor_weight <- factor_weights$value[match(centrality_df$names, factor_weights$node)]
-  
   centrality_df$names[centrality_df$rank > 10] <- ""
-  
-  # Create the plot with the given title
-  pal <- wes_palette("Zissou1", 100, type = "continuous")
-  # Define your plot with ggplot
-  out <- ggplot(centrality_df, aes(x = rank, y = values, label = names, colour = factor_weight)) + 
-    geom_point() + 
-    cowplot::theme_cowplot() + 
-    geom_text_repel(colour = "black") +
-    scale_colour_gradientn(colours = pal) + 
-    ggtitle(title) +  # Add the plot title
-    labs(x = "Rank in network", y = "Centrality (PageRank)") +  # Adding axis titles
-    theme(legend.position = "bottom")  # Placing legend at the bottom
-  
   
   return(centrality_df)
 }
@@ -404,7 +305,7 @@ names_for_subnet <- unique(c(factor1_centrality$ind[factor1_centrality$rank < cu
 terminal<-rep(1, length(names_for_subnet))
 names(terminal)<-names_for_subnet
 ####parameters ####
-n<-30 #no. of runs30
+n<-4000 #no. of runs30
 r<-5 #adding random noise to edge costs  5
 w<-40 #number of trees in output 40
 b<-8 #tuning node prizes 1
@@ -502,7 +403,9 @@ normalize_vector <- function(vec) {
 # Perform a random walk and get stationary distribution
 perform_random_walk <- function(graph, start_vector) {
   adj_matrix <- as_adjacency_matrix(graph)
-  pt <- random.walk(start_vector, data.matrix(adj_matrix), r = 0.02, correct.for.hubs = T)
+  pt <- random.walk(start_vector, data.matrix(adj_matrix), 
+                    r = 0.02, 
+                    correct.for.hubs = T,do.analytical = T,niter = 10000000)
   return(pt$p.inf)
 }
 
@@ -541,8 +444,8 @@ L_df$combined_up_probabilities <- perform_random_walk(subnet, combined_up_recept
 L_df$combined_down_probabilities <- perform_random_walk(subnet, combined_down_receptors)
 
 
-pdf(file = paste0("/Users/charliebarker/Desktop/test.pdf"), 
-    width = 18, height = 15)
+pdf(file = paste0("./results/heatdiffusion/heatdiffusion_networks.pdf"), 
+    width = 20, height = 20)
 
 ggraph(subnet, layout = subnet_l) + 
   geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
@@ -617,32 +520,65 @@ ggraph(subnet, layout = subnet_l) +
   geom_node_label(aes(label = Gene_name),size=4, repel = FALSE) +
   ggtitle("Heat diffusion of receptors down in combination drugs") +
   theme(legend.position = "bottom")  # Placing legend at the bottom
+dev.off()
 
 # basic scatterplot
 L_df$is_receptor = L_df$Gene_name %in% receptors
-ggplot(L_df, aes(x=arid1a_up_probabilities, y=combined_up_probabilities, label=Gene_name, color = is_receptor)) + 
+
+# Define the function
+process_data_for_labeling <- function(data, x_col, y_col, label_col, 
+                                      threshold_x = NULL, threshold_y = NULL, 
+                                      quantile_threshold = 0.9) {
+  
+  # Determine thresholds if not provided
+  if (is.null(threshold_x)) {
+    threshold_x <- quantile(data[[x_col]], quantile_threshold)
+  }
+  if (is.null(threshold_y)) {
+    threshold_y <- quantile(data[[y_col]], quantile_threshold)
+  }
+  
+  # Create a new column to flag high values
+  data$label_flag <- with(data, ifelse(
+    data[[x_col]] > threshold_x | 
+      data[[y_col]] > threshold_y,
+    data[[label_col]],
+    NA
+  ))
+  
+  return(data)
+}
+
+pdf(file = paste0("./results/heatdiffusion/heatdiffusion_scatters.pdf"), 
+    width = 10, height = 10)
+
+# Usage example
+L_df_processed <- process_data_for_labeling(L_df, "arid1a_up_probabilities", "combined_up_probabilities", "Gene_name")
+ggplot(L_df_processed, aes(x=arid1a_up_probabilities, y=combined_up_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : up receptors vs up") +
-  ggrepel::geom_text_repel(size = 8) + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
 
 # basic scatterplot
-ggplot(L_df, aes(x=arid1a_down_probabilities, y=combined_down_probabilities, label=Gene_name, color = is_receptor)) + 
+L_df_processed <- process_data_for_labeling(L_df, "arid1a_down_probabilities", "combined_down_probabilities", "Gene_name")
+ggplot(L_df_processed, aes(x=arid1a_down_probabilities, y=combined_down_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : down receptors vs down") +
-  ggrepel::geom_text_repel(size = 8) + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
 
 # basic scatterplot
-ggplot(L_df, aes(x=arid1a_up_probabilities, y=combined_down_probabilities, label=Gene_name, color = is_receptor)) + 
+L_df_processed <- process_data_for_labeling(L_df, "arid1a_up_probabilities", "combined_down_probabilities", "Gene_name")
+ggplot(L_df_processed, aes(x=arid1a_up_probabilities, y=combined_down_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : up receptors vs down") +
-  ggrepel::geom_text_repel(size = 8) + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
 
 # basic scatterplot
-ggplot(L_df, aes(x=arid1a_down_probabilities, y=combined_up_probabilities, label=Gene_name, color = is_receptor)) + 
+L_df_processed <- process_data_for_labeling(L_df, "arid1a_down_probabilities", "combined_up_probabilities", "Gene_name")
+ggplot(L_df_processed, aes(x=arid1a_down_probabilities, y=combined_up_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : down receptors vs up") +
-  ggrepel::geom_text_repel(size = 8) + cowplot::theme_cowplot()
-
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
 dev.off()
 
 
@@ -666,9 +602,228 @@ vector_to_binary_matrix <- function(vec) {
   return(result_matrix)
 }
 
-to_test<-combined_down_receptors
+to_test<-arid1a_up_receptors
 test<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
-
-test[test$L_df.Gene_name %in% c("JUN", "PRKD1"),]
-
+test[test$L_df.Gene_name %in% c("JUN", "PRKD1","MAPK1", "MAPK3"),]
 L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
+
+
+to_test<-arid1a_down_receptors
+test<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
+test[test$L_df.Gene_name %in% c("SPRED1", "NGFR","MAPK1", "MAPK3"),]
+L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
+
+
+
+library(igraph)
+library(ggraph)
+library(dplyr)
+
+# Define the union2 function
+union2 <- function(g1, g2) {
+  # Internal function to clean the names of a given attribute
+  CleanNames <- function(g, target) {
+    # Get target names
+    gNames <- parse(text = paste0(target, "_attr_names(g)")) %>% eval
+    # Find names that have a "_1" or "_2" at the end
+    AttrNeedsCleaning <- grepl("(_\\d)$", gNames)
+    # Remove the _x ending
+    StemName <- gsub("(_\\d)$", "", gNames)
+    
+    NewnNames <- unique(StemName[AttrNeedsCleaning])
+    # Replace attribute name for all attributes
+    for (i in NewnNames) {
+      attr1 <- parse(text = paste0(target, "_attr(g,'", paste0(i, "_1"), "')")) %>% eval
+      attr2 <- parse(text = paste0(target, "_attr(g,'", paste0(i, "_2"), "')")) %>% eval
+      
+      g <- parse(text = paste0("set_", target, "_attr(g, i, value = ifelse(is.na(attr1), attr2, attr1))")) %>% eval
+      g <- parse(text = paste0("delete_", target, "_attr(g,'", paste0(i, "_1"), "')")) %>% eval
+      g <- parse(text = paste0("delete_", target, "_attr(g,'", paste0(i, "_2"), "')")) %>% eval
+    }
+    
+    return(g)
+  }
+  
+  g <- igraph::union(g1, g2)
+  V(g)$consensus_direction <- paste0(V(g)$direction_1, "__", V(g)$direction_2)
+  V(g)$consensus_factor <- paste0(V(g)$factor_1, "__", V(g)$factor_2, "__", V(g)$factor_3)
+  
+  # Loop through each attribute type in the graph and clean
+  for (i in c("graph", "edge", "vertex")) {
+    g <- CleanNames(g, i)
+  }
+  
+  return(g)
+}
+
+
+# Example function to position source nodes above
+adjust_layout <- function(g, sources_uniprot, original_layout) {
+  # Check if the graph and layout have the same number of nodes
+  if (nrow(original_layout) != vcount(g)) {
+    stop("Layout does not match the number of nodes in the graph.")
+  }
+  
+  # Get the indices of the source nodes
+  source_indices <- which(V(g)$name %in% sources_uniprot)
+  
+  # Set a y-coordinate above the main graph for source nodes
+  # Assuming original layout is a matrix with two columns (x, y)
+  adjusted_layout <- original_layout
+  adjusted_layout[source_indices, 2] <- max(original_layout[, 2]) + 1.5  # Set y to be above the max y of the original layout
+  
+  # Evenly space the source nodes along the x-axis
+  num_sources <- length(source_indices)
+  spacing <- (max(original_layout[, 1]) - min(original_layout[, 1])) / (num_sources + 1)
+  adjusted_layout[source_indices, 1] <- seq(min(original_layout[, 1]) + spacing, length.out = num_sources, by = spacing)
+  
+  return(adjusted_layout)
+}
+# Define the make_shortest_paths_plot function
+make_shortest_paths_plot <- function(sources, sinks, g, conv_nodes, factor_genes_names_df, factor_weights_wide, pal) {
+  # Match gene names to UniProt IDs
+  sources_uniprot <- conv_nodes$uniprt[match(sources, conv_nodes$gene_name)]
+  sinks_uniprot <- conv_nodes$uniprt[match(sinks, conv_nodes$gene_name)]
+  
+  # Ensure all nodes are in the graph
+  if (!all(c(sources_uniprot, sinks_uniprot) %in% V(g)$name)) {
+    stop("Some nodes are not present in the graph.")
+  }
+  
+  # Initialize a list to hold subgraphs of shortest paths
+  shortest_paths_list <- list()
+  
+  # Function to get edges from path nodes
+  edge_from_path <- function(path_nodes) {
+    edges <- c()
+    for (i in 1:(length(path_nodes) - 1)) {
+      edges <- c(edges, which(V(g)$name == path_nodes[i]), which(V(g)$name == path_nodes[i + 1]))
+    }
+    return(matrix(edges, ncol = 2, byrow = TRUE))
+  }
+  
+  super_graph <- make_empty_graph(directed = FALSE)
+  
+  # Compute shortest paths and create subgraphs
+  for (source in sources_uniprot) {
+    for (sink in sinks_uniprot) {
+      # Compute the shortest path
+      sp <- shortest_paths(g, from = source, to = sink, output = "both")
+      
+      # Check if a path exists
+      if (length(sp$vpath) > 0 && length(sp$vpath[[1]]) > 0) {
+        path_nodes <- sp$vpath[[1]]
+        path_edges <- edge_from_path(path_nodes)
+        
+        # Create a subgraph for the shortest path
+        path_subgraph <- induced_subgraph(g, unique(path_nodes))
+        E(path_subgraph)$color <- "red"  # Optional: highlight the path edges
+        V(path_subgraph)$color <- "lightblue"  # Optional: highlight the nodes
+        
+        # Ensure path_subgraph is an igraph object
+        if (!is_igraph(path_subgraph)) {
+          stop("path_subgraph is not a valid igraph object.")
+        }
+        
+        # Combine subgraphs
+        if (is.null(super_graph) || length(V(super_graph)) == 0) {
+          super_graph <- path_subgraph
+        } else {
+          super_graph <- union2(super_graph, path_subgraph)
+        }
+        
+        # Store the subgraph in the list
+        shortest_paths_list[[paste(conv_nodes$gene_name[conv_nodes$uniprt == source], 
+                                   conv_nodes$gene_name[conv_nodes$uniprt == sink], 
+                                   sep = "_")]] <- path_subgraph
+      }
+    }
+  }
+  
+  # Ensure super_graph is an igraph object
+  if (!is_igraph(super_graph)) {
+    stop("super_graph is not a valid igraph object.")
+  }
+  
+  # Debugging output
+  cat("Type of super_graph:", class(super_graph), "\n")
+  cat("Number of vertices in super_graph:", length(V(super_graph)), "\n")
+  cat("Number of edges in super_graph:", length(E(super_graph)), "\n")
+  
+  # Display the list of subgraphs
+  test <- super_graph
+  
+  subnet_l <- tryCatch({
+    igraph::layout_with_sugiyama(test)$layout
+  }, error = function(e) {
+    stop("Layout calculation failed: ", e$message)
+  })
+  
+  if (is.null(subnet_l)) {
+    stop("Layout calculation failed.")
+  }
+  subnet_l <- adjust_layout(test, sources_uniprot, subnet_l)
+  V(test)$Gene_name <- conv_nodes$gene_name[match(V(test)$name, conv_nodes$uniprt)]
+  L_df <- as.data.frame(subnet_l)
+  colnames(L_df) <- c("x", "y")
+  L_df$Gene_name <- V(test)$Gene_name
+  L_df$Factor1 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor1"]
+  L_df$Factor2 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor2"]
+  L_df$Factor3 <- L_df$Gene_name %in% factor_genes_names_df$values[factor_genes_names_df$factor == "Factor3"]
+  
+  # Add columns for each factor and view
+  L_df <- L_df %>%
+    add_factor_view_columns(factor_weights_wide, "Factor1") %>%
+    add_factor_view_columns(factor_weights_wide, "Factor2") %>%
+    add_factor_view_columns(factor_weights_wide, "Factor3")
+  
+  out_ggplot <- ggraph(test, layout = subnet_l) + 
+    geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+               aes(x = x, y = y, colour = protein_Factor3), 
+               alpha = 1, size = 10,
+               stroke = 5) +
+    geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
+               aes(x = x, y = y, colour = mRNA_Factor3), 
+               alpha = 1, size = 6,
+               stroke = 5) + 
+    geom_edge_bend2(start_cap = circle(3, 'mm'),
+                   end_cap = circle(3, 'mm'), 
+                   aes(alpha = weight)) + 
+    geom_node_point(size = 5) + 
+    coord_fixed() + theme_void() +
+    geom_node_label(aes(label = Gene_name), size = 4, repel = FALSE) +
+    theme(legend.position = "bottom") + # Placing legend at the bottom
+    scale_colour_gradientn(colours = pal, na.value = "lightgrey")
+  
+  return(out_ggplot)
+}
+
+
+pdf(file = paste0("./results/heatdiffusion/shortestpath_results.pdf"), 
+    width = 10, height = 10)
+
+# Run the function
+make_shortest_paths_plot(
+  sources = c("EGFR", "ROS1", "FGFR1", "ITGA4", "NTRK3"),
+  sinks =  c("JUN", "PRKD1", "MAPK1"),
+  g = subnet,
+  conv_nodes = conv_nodes,
+  factor_genes_names_df = factor_genes_names_df,
+  factor_weights_wide = factor_weights_wide,
+  pal = pal
+) +
+  ggtitle("Shortest path of receptors up to JUN, PRKD1, MAPK1 in ARID1A")
+
+# Run the function
+make_shortest_paths_plot(
+  sources = c("NGFR"),
+  sinks =  c("SPRED1", "MAPK1"),
+  g = subnet,
+  conv_nodes = conv_nodes,
+  factor_genes_names_df = factor_genes_names_df,
+  factor_weights_wide = factor_weights_wide,
+  pal = pal
+) +
+  ggtitle("Shortest path of receptors down in ARID1A")
+
+dev.off()
