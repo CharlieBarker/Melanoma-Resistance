@@ -129,7 +129,7 @@ super_graph <- make_empty_graph(directed = TRUE)
 
 conv_nodes<-data.frame(uniprot = V(super_graph)$name,
                        genename= V(super_graph)$Gene_name)
-write.csv(conv_nodes, file = "./data/name_converter_for_network.csv")
+# write.csv(conv_nodes, file = "./data/name_converter_for_network.csv")
 
 for (factor in factorS) {
   up_graph<-factor_graphs[[factor]][["up"]]
@@ -148,7 +148,7 @@ for (factor in factorS) {
   
 }
 
-largest_component_graph <- super_graph
+largest_component_graph <- super_graph_down
 
 library(ggraph)
 library(igraph)
@@ -199,7 +199,7 @@ facetted_graph <- ggraph(largest_component_graph, layout = l) +
 
 
 
-pdf("./paper/plots/phuego_facetted_big.pdf", width = 8, height = 6)
+pdf("./paper/plots/phuego_facetted_down.pdf", width = 8, height = 6)
 big_graph
 facetted_graph
 # Get network greyed out

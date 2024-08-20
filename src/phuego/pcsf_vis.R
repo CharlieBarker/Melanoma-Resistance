@@ -5,7 +5,7 @@ library(igraph)
 library(dplyr)
 library(tidyr)
 
-names_for_subnet <-factor1_centrality$ind[factor1_centrality$rank < 50] 
+names_for_subnet <-factor_centrality$ind[factor_centrality$rank < 50] 
 
 ####prep data for pcsf#####
 terminal<-rep(1, length(names_for_subnet))

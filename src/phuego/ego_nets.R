@@ -60,7 +60,7 @@ results_dir <- "./results/phuego/results/"
 factor_graphs <- list()
 factor_genes_names <- list()
 
-factor_to_vis<-"Factor3"
+factor_to_vis<-"Factor2"
 
 # Process each factor
 for (factor in factorS) {
@@ -335,6 +335,10 @@ ggraph(subnet, layout = subnet_l) +
   geom_node_label(aes(label = Gene_name),size=4, repel = FALSE) +
   theme(legend.position = "bottom") + # Placing legend at the bottom
   scale_colour_gradientn(colours = pal, na.value = "lightgrey")
+
+#write file
+
+
 dev.off()
 
 
