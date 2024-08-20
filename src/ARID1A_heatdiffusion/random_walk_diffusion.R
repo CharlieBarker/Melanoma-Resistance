@@ -18,8 +18,8 @@ library(tidyr)
 library(MOFA2)
 library(ggConvexHull)
 seed<-runif(n = 1, min = 1, max = 1000)
-set.seed(478.073)
-print(seed) #301.3149
+set.seed(680.2898)
+print(seed) #680.2898
 knitr::opts_chunk$set(dev = "ragg_png")
 
 # Set environment and working directory
@@ -122,42 +122,38 @@ collapsed_factor_weights <- factor_weights %>%
   group_by(node) %>%
   summarise(value = sum(value))
 
-union2<-function(g1, g2){
-  
-  #Internal function that cleans the names of a given attribute
-  CleanNames <- function(g, target){
-    #get target names
-    gNames <- parse(text = (paste0(target,"_attr_names(g)"))) %>% eval 
-    #find names that have a "_1" or "_2" at the end
-    AttrNeedsCleaning <- grepl("(_\\d)$", gNames )
-    #remove the _x ending
+
+# Define the union2 function
+union2 <- function(g1, g2) {
+  # Internal function to clean the names of a given attribute
+  CleanNames <- function(g, target) {
+    # Get target names
+    gNames <- parse(text = paste0(target, "_attr_names(g)")) %>% eval
+    # Find names that have a "_1" or "_2" at the end
+    AttrNeedsCleaning <- grepl("(_\\d)$", gNames)
+    # Remove the _x ending
     StemName <- gsub("(_\\d)$", "", gNames)
     
     NewnNames <- unique(StemName[AttrNeedsCleaning])
-    #replace attribute name for all attributes
-    for( i in NewnNames){
+    # Replace attribute name for all attributes
+    for (i in NewnNames) {
+      attr1 <- parse(text = paste0(target, "_attr(g,'", paste0(i, "_1"), "')")) %>% eval
+      attr2 <- parse(text = paste0(target, "_attr(g,'", paste0(i, "_2"), "')")) %>% eval
       
-      attr1 <- parse(text = (paste0(target,"_attr(g,'", paste0(i, "_1"),"')"))) %>% eval
-      attr2 <- parse(text = (paste0(target,"_attr(g,'", paste0(i, "_2"),"')"))) %>% eval
-      
-      g <- parse(text = (paste0("set_",target,"_attr(g, i, value = ifelse(is.na(attr1), attr2, attr1))"))) %>%
-        eval
-      
-      g <- parse(text = (paste0("delete_",target,"_attr(g,'", paste0(i, "_1"),"')"))) %>% eval
-      g <- parse(text = (paste0("delete_",target,"_attr(g,'", paste0(i, "_2"),"')"))) %>% eval
-      
+      g <- parse(text = paste0("set_", target, "_attr(g, i, value = ifelse(is.na(attr1), attr2, attr1))")) %>% eval
+      g <- parse(text = paste0("delete_", target, "_attr(g,'", paste0(i, "_1"), "')")) %>% eval
+      g <- parse(text = paste0("delete_", target, "_attr(g,'", paste0(i, "_2"), "')")) %>% eval
     }
     
     return(g)
   }
   
-  
-  g <- igraph::union(g1, g2) 
+  g <- igraph::union(g1, g2)
   V(g)$consensus_direction <- paste0(V(g)$direction_1, "__", V(g)$direction_2)
   V(g)$consensus_factor <- paste0(V(g)$factor_1, "__", V(g)$factor_2, "__", V(g)$factor_3)
   
-  #loop through each attribute type in the graph and clean
-  for(i in c("graph", "edge", "vertex")){
+  # Loop through each attribute type in the graph and clean
+  for (i in c("graph", "edge", "vertex")) {
     g <- CleanNames(g, i)
   }
   
@@ -291,7 +287,8 @@ g<-union2(union_factor_graphs[["Factor1"]],
 conv_nodes<-data.frame(uniprt=V(g)$name,
                        gene_name=V(g)$Gene_name)
 
-####PCSF on the most central nodes (pagerank)####
+#######PCSF#######
+###PCSF on the most central nodes (pagerank)
 
 library(OmnipathR)
 library(PCSF)
@@ -355,6 +352,8 @@ L_df <- L_df %>%
 
 library(diffusr)
 
+#######DIFFUSION#######
+
 #get list of receptors
 receptors <-
   OmnipathR::import_omnipath_intercell(
@@ -405,7 +404,7 @@ perform_random_walk <- function(graph, start_vector) {
   adj_matrix <- as_adjacency_matrix(graph)
   pt <- random.walk(start_vector, data.matrix(adj_matrix), 
                     r = 0.02, 
-                    correct.for.hubs = T,do.analytical = T,niter = 10000000)
+                    correct.for.hubs = T,do.analytical = T)
   return(pt$p.inf)
 }
 
@@ -557,28 +556,28 @@ L_df_processed <- process_data_for_labeling(L_df, "arid1a_up_probabilities", "co
 ggplot(L_df_processed, aes(x=arid1a_up_probabilities, y=combined_up_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : up receptors vs up") +
-  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()+ scale_color_manual(values=wes_palette("Chevalier1"))
 
 # basic scatterplot
 L_df_processed <- process_data_for_labeling(L_df, "arid1a_down_probabilities", "combined_down_probabilities", "Gene_name")
 ggplot(L_df_processed, aes(x=arid1a_down_probabilities, y=combined_down_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : down receptors vs down") +
-  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()+ scale_color_manual(values=wes_palette("Chevalier1"))
 
 # basic scatterplot
 L_df_processed <- process_data_for_labeling(L_df, "arid1a_up_probabilities", "combined_down_probabilities", "Gene_name")
 ggplot(L_df_processed, aes(x=arid1a_up_probabilities, y=combined_down_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : up receptors vs down") +
-  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()+ scale_color_manual(values=wes_palette("Chevalier1"))
 
 # basic scatterplot
 L_df_processed <- process_data_for_labeling(L_df, "arid1a_down_probabilities", "combined_up_probabilities", "Gene_name")
 ggplot(L_df_processed, aes(x=arid1a_down_probabilities, y=combined_up_probabilities, label=label_flag, color = is_receptor)) + 
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : down receptors vs up") +
-  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()
+  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot() + scale_color_manual(values=wes_palette("Chevalier1"))
 dev.off()
 
 
@@ -602,60 +601,73 @@ vector_to_binary_matrix <- function(vec) {
   return(result_matrix)
 }
 
-to_test<-arid1a_up_receptors
-test<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
-test[test$L_df.Gene_name %in% c("JUN", "PRKD1","MAPK1", "MAPK3"),]
-L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
 
-
-to_test<-arid1a_down_receptors
-test<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
-test[test$L_df.Gene_name %in% c("SPRED1", "NGFR","MAPK1", "MAPK3"),]
-L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
-
-
-
-library(igraph)
-library(ggraph)
-library(dplyr)
-
-# Define the union2 function
-union2 <- function(g1, g2) {
-  # Internal function to clean the names of a given attribute
-  CleanNames <- function(g, target) {
-    # Get target names
-    gNames <- parse(text = paste0(target, "_attr_names(g)")) %>% eval
-    # Find names that have a "_1" or "_2" at the end
-    AttrNeedsCleaning <- grepl("(_\\d)$", gNames)
-    # Remove the _x ending
-    StemName <- gsub("(_\\d)$", "", gNames)
-    
-    NewnNames <- unique(StemName[AttrNeedsCleaning])
-    # Replace attribute name for all attributes
-    for (i in NewnNames) {
-      attr1 <- parse(text = paste0(target, "_attr(g,'", paste0(i, "_1"), "')")) %>% eval
-      attr2 <- parse(text = paste0(target, "_attr(g,'", paste0(i, "_2"), "')")) %>% eval
-      
-      g <- parse(text = paste0("set_", target, "_attr(g, i, value = ifelse(is.na(attr1), attr2, attr1))")) %>% eval
-      g <- parse(text = paste0("delete_", target, "_attr(g,'", paste0(i, "_1"), "')")) %>% eval
-      g <- parse(text = paste0("delete_", target, "_attr(g,'", paste0(i, "_2"), "')")) %>% eval
-    }
-    
-    return(g)
+# Define the function to create a heatmap
+create_heatmap <- function(data_frame, to_test, nodes_to_see, subnet, rtks_list, plot_title="") {
+  # Ensure that 'L_df.Gene_name' column is present in 'data_frame'
+  if (!"L_df.Gene_name" %in% colnames(data_frame)) {
+    stop("The data frame must contain the column 'L_df.Gene_name'")
   }
-  
-  g <- igraph::union(g1, g2)
-  V(g)$consensus_direction <- paste0(V(g)$direction_1, "__", V(g)$direction_2)
-  V(g)$consensus_factor <- paste0(V(g)$factor_1, "__", V(g)$factor_2, "__", V(g)$factor_3)
-  
-  # Loop through each attribute type in the graph and clean
-  for (i in c("graph", "edge", "vertex")) {
-    g <- CleanNames(g, i)
-  }
-  
-  return(g)
+  # Prepare the data frame for heatmap
+  heatmap_data <- data_frame
+  heatmap_data <- heatmap_data[match(nodes_to_see, heatmap_data$L_df.Gene_name),]
+  # Extract the matrix for heatmap
+  data_matrix <- as.matrix(heatmap_data[, -1])
+  colnames(data_matrix) <- rtks_list
+  rownames(data_matrix) <- heatmap_data$L_df.Gene_name
+  # Create and return the heatmap
+  Heatmap(
+    data_matrix,
+    name = "HEAT from receptors", na_col = "darkgrey", 
+    rect_gp = gpar(col = "white", lwd = 5), cluster_columns = F, cluster_rows = F,
+    column_gap=unit(.05, "npc"),
+    row_title = "Nodes in network", row_title_gp = gpar(fontsize = 10),
+    column_title = plot_title, column_title_gp = gpar(fontsize = 10), 
+    col = viridis::magma(256)
+  )
 }
 
+
+pdf(file = paste0("./results/heatdiffusion/individual_receptor_heat.pdf"), 
+    width = 9, height = 3)
+
+library(ComplexHeatmap)
+library(viridis)
+
+# Example usage (you need to provide the actual objects for `arid1a_up_receptors`, `subnet`, and `vector_to_binary_matrix`):
+to_test<-arid1a_up_receptors
+df_arid1a_up<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
+rtks_list<-L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
+arid1a_up_heatmap <- create_heatmap(data_frame = df_arid1a_up,
+                          to_test = arid1a_up_receptors,
+                          nodes_to_see = c("JUN", "PRKD1", "MAPK1", "MAPK3"),
+                          subnet = subnet,
+                          rtks_list = rtks_list,
+                          plot_title="Receptors upregulated after ARID1A KO")
+to_test<-combined_up_receptors
+df_combined_up<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
+rtks_list<-L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
+combined_heatmap <- create_heatmap(data_frame = df_combined_up,
+                          to_test = combined_up_receptors,
+                          nodes_to_see = c("JUN", "PRKD1","MAPK1", "MAPK3"),
+                          subnet = subnet,
+                          rtks_list = rtks_list,
+                          plot_title="Receptors upregulated after combined therapy")
+
+ht_list = arid1a_up_heatmap + combined_heatmap
+draw(ht_list)
+
+to_test<-arid1a_down_receptors
+heatmap_arid1a_up<-data.frame(L_df$Gene_name, perform_random_walk(subnet, vector_to_binary_matrix(to_test)))
+rtks_list<-L_df$Gene_name[as.logical(rowSums(vector_to_binary_matrix(to_test)))]
+heatmap <- create_heatmap(data_frame = heatmap_arid1a_up,
+                          to_test = arid1a_up_receptors,
+                          nodes_to_see = c("SPRED1", "NGFR","MAPK1", "MAPK3"),
+                          subnet = subnet,
+                          rtks_list = rtks_list)
+
+
+dev.off()
 
 # Example function to position source nodes above
 adjust_layout <- function(g, sources_uniprot, original_layout) {
@@ -679,20 +691,53 @@ adjust_layout <- function(g, sources_uniprot, original_layout) {
   
   return(adjusted_layout)
 }
+
+# Function to return the largest connected subgraph with high flow edges
+max_flow_subgraph <- function(graph, source, sink, prob = 0.95) {
+  # Compute the maximum flow
+  mf_result <- max_flow(graph, source = source, target = sink, capacity = E(graph)$weight)
+  
+  # Get the flow values on the edges
+  edge_flows <- mf_result$flow
+  
+  # Determine the specified percentile of the flow values
+  threshold <- quantile(edge_flows, probs = prob)
+  
+  # Identify edges with flow values above the threshold
+  high_flow_edges <- E(graph)[edge_flows > threshold]
+  
+  # Create a subgraph containing only these edges
+  subgraph <- induced_subgraph(graph, unique(c(ends(graph, high_flow_edges))))
+  
+  # Find connected components
+  components <- components(subgraph)
+  
+  # Get the component that includes the source and sink
+  component_with_source_sink <- which(components$membership[V(subgraph)$name == source] == components$membership[V(subgraph)$name == sink])
+  
+  # Extract the nodes in this component
+  component_nodes <- V(subgraph)[components$membership == component_with_source_sink]
+  
+  # Create the final subgraph based on these nodes
+  final_subgraph <- induced_subgraph(subgraph, component_nodes)
+  
+  # Return the final subgraph
+  return(final_subgraph)
+}
+
 # Define the make_shortest_paths_plot function
-make_shortest_paths_plot <- function(sources, sinks, g, conv_nodes, factor_genes_names_df, factor_weights_wide, pal) {
+make_shortest_paths_plot <- function(sources, sinks, g,
+                                     conv_nodes, factor_genes_names_df, factor_weights_wide, pal,
+                                     return_df=F) {
   # Match gene names to UniProt IDs
   sources_uniprot <- conv_nodes$uniprt[match(sources, conv_nodes$gene_name)]
   sinks_uniprot <- conv_nodes$uniprt[match(sinks, conv_nodes$gene_name)]
-  
   # Ensure all nodes are in the graph
   if (!all(c(sources_uniprot, sinks_uniprot) %in% V(g)$name)) {
     stop("Some nodes are not present in the graph.")
   }
-  
   # Initialize a list to hold subgraphs of shortest paths
   shortest_paths_list <- list()
-  
   # Function to get edges from path nodes
   edge_from_path <- function(path_nodes) {
     edges <- c()
@@ -701,41 +746,17 @@ make_shortest_paths_plot <- function(sources, sinks, g, conv_nodes, factor_genes
     }
     return(matrix(edges, ncol = 2, byrow = TRUE))
   }
-  
   super_graph <- make_empty_graph(directed = FALSE)
-  
   # Compute shortest paths and create subgraphs
   for (source in sources_uniprot) {
     for (sink in sinks_uniprot) {
       # Compute the shortest path
-      sp <- shortest_paths(g, from = source, to = sink, output = "both")
-      
-      # Check if a path exists
-      if (length(sp$vpath) > 0 && length(sp$vpath[[1]]) > 0) {
-        path_nodes <- sp$vpath[[1]]
-        path_edges <- edge_from_path(path_nodes)
-        
-        # Create a subgraph for the shortest path
-        path_subgraph <- induced_subgraph(g, unique(path_nodes))
-        E(path_subgraph)$color <- "red"  # Optional: highlight the path edges
-        V(path_subgraph)$color <- "lightblue"  # Optional: highlight the nodes
-        
-        # Ensure path_subgraph is an igraph object
-        if (!is_igraph(path_subgraph)) {
-          stop("path_subgraph is not a valid igraph object.")
-        }
-        
-        # Combine subgraphs
-        if (is.null(super_graph) || length(V(super_graph)) == 0) {
-          super_graph <- path_subgraph
-        } else {
-          super_graph <- union2(super_graph, path_subgraph)
-        }
-        
-        # Store the subgraph in the list
-        shortest_paths_list[[paste(conv_nodes$gene_name[conv_nodes$uniprt == source], 
-                                   conv_nodes$gene_name[conv_nodes$uniprt == sink], 
-                                   sep = "_")]] <- path_subgraph
+      sp <- max_flow_subgraph(graph = g, source = source, sink = sink, prob = 0.9)
+      # Combine subgraphs
+      if (is.null(super_graph) || length(V(super_graph)) == 0) {
+          super_graph <- sp
+      } else {
+          super_graph <- union2(super_graph, sp)
       }
     }
   }
@@ -786,7 +807,7 @@ make_shortest_paths_plot <- function(sources, sinks, g, conv_nodes, factor_genes
                aes(x = x, y = y, colour = mRNA_Factor3), 
                alpha = 1, size = 6,
                stroke = 5) + 
-    geom_edge_bend2(start_cap = circle(3, 'mm'),
+    geom_edge_hive(start_cap = circle(3, 'mm'),
                    end_cap = circle(3, 'mm'), 
                    aes(alpha = weight)) + 
     geom_node_point(size = 5) + 
@@ -794,36 +815,74 @@ make_shortest_paths_plot <- function(sources, sinks, g, conv_nodes, factor_genes
     geom_node_label(aes(label = Gene_name), size = 4, repel = FALSE) +
     theme(legend.position = "bottom") + # Placing legend at the bottom
     scale_colour_gradientn(colours = pal, na.value = "lightgrey")
-  
-  return(out_ggplot)
+  if (return_df) {
+    return(test)
+  }else{
+    return(out_ggplot)
+  }
 }
 
-
 pdf(file = paste0("./results/heatdiffusion/shortestpath_results.pdf"), 
-    width = 10, height = 10)
+    width = 30, height = 30)
 
-# Run the function
+# Plot shortest paths from specific receptors to transcription factors JUN and PRKD1
 make_shortest_paths_plot(
-  sources = c("EGFR", "ROS1", "FGFR1", "ITGA4", "NTRK3"),
-  sinks =  c("JUN", "PRKD1", "MAPK1"),
+  sources = c("EGFR", "ROS1", "FGFR1"),
+  sinks =  c("JUN"),
   g = subnet,
   conv_nodes = conv_nodes,
   factor_genes_names_df = factor_genes_names_df,
   factor_weights_wide = factor_weights_wide,
   pal = pal
 ) +
-  ggtitle("Shortest path of receptors up to JUN, PRKD1, MAPK1 in ARID1A")
+  ggtitle("Shortest Paths from EGFR, ROS1, and FGFR1 to JUN and PRKD1")
 
-# Run the function
+# Plot shortest paths from specific receptors to MAPK1
+make_shortest_paths_plot(
+  sources = c("EGFR", "ROS1", "FGFR1"),
+  sinks =  c("MAPK1"),
+  g = subnet,
+  conv_nodes = conv_nodes,
+  factor_genes_names_df = factor_genes_names_df,
+  factor_weights_wide = factor_weights_wide,
+  pal = pal
+) +
+  ggtitle("Shortest Paths from EGFR, ROS1, and FGFR1 to MAPK1")
+
+# Plot shortest paths from ITGA4 and NTRK3 to MAPK1
+make_shortest_paths_plot(
+  sources = c("ITGA4", "NTRK3"),
+  sinks =  c("MAPK1", "MAPK3"),
+  g = subnet,
+  conv_nodes = conv_nodes,
+  factor_genes_names_df = factor_genes_names_df,
+  factor_weights_wide = factor_weights_wide,
+  pal = pal
+) +
+  ggtitle("Shortest Paths from ITGA4, NTRK3, SIRPA and ERBB3 to MAPK1")
+
+# Plot shortest paths from NGFR to SPRED1
 make_shortest_paths_plot(
   sources = c("NGFR"),
-  sinks =  c("SPRED1", "MAPK1"),
+  sinks =  c("SPRED1"),
   g = subnet,
   conv_nodes = conv_nodes,
   factor_genes_names_df = factor_genes_names_df,
   factor_weights_wide = factor_weights_wide,
   pal = pal
 ) +
-  ggtitle("Shortest path of receptors down in ARID1A")
+  ggtitle("Shortest Path from NGFR to SPRED1")
+
+# Plot shortest paths from NGFR to MAPK1
+make_shortest_paths_plot(
+  sources = c("NGFR"),
+  sinks =  c("MAPK1"),
+  g = subnet,
+  conv_nodes = conv_nodes,
+  factor_genes_names_df = factor_genes_names_df,
+  factor_weights_wide = factor_weights_wide,
+  pal = pal
+) +
+  ggtitle("Shortest Path from NGFR to MAPK1")
 
 dev.off()
