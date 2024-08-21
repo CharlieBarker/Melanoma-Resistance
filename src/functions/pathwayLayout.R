@@ -52,6 +52,13 @@ create_custom_layout <- function(graph, type_labels, y_position) {
 }
 
 # Define the custom pathway layout function
+# 
+# # Example usage
+# # Assuming 'graph' is your igraph object with a 'type' attribute for each vertex
+# flow_graph<-plot_graph_with_flow_cutoff(graph = maxflowSubgraph, flow_cutoff = 1000, print_graph = F)
+# path_layout <- pathwayLayout(flow_graph)
+# londonUnderground_plot(flow_graph, path_layout, color = "#0098D4")
+
 pathwayLayout <- function(graph,
                           receptor_y_position = 1,
                           transcription_factor_y_position = -1,
@@ -81,22 +88,35 @@ pathwayLayout <- function(graph,
   
   return(layout_matrix)
 }
+
+# Define the londonUnderground_plot function
+
+# # 
+# # # Example usage
 # 
-# # Example usage
-# # Assuming 'graph' is your igraph object with a 'type' attribute for each vertex
-# flow_graph<-plot_graph_with_flow_cutoff(graph = maxflowSubgraph, flow_cutoff = 1000, print_graph = F)
-# path_layout <- pathwayLayout(flow_graph)
+# # Create a sample graph using make_ring
+# graph <- make_ring(5)
 # 
+# # Define the layout (using Kamada-Kaway layout for demonstration)
+# path_layout <- layout_with_kk(graph)
 # 
-# # Plot the graph with custom layout
-# ggraph(flow_graph, layout = path_layout) + 
-#   geom_edge_link(aes(color = "line"), width = 2) + # Customize the edge color and thickness
-#   geom_node_point(color = "black", size = 8, shape = 21, fill = "white", stroke = 2) + # Customize the node color, outline, and size
-#   geom_node_text(aes(label = name), nudge_y = 0.5, size = 4, fontface = "bold", color = "black") + # Avoid label overlap
-#   scale_edge_color_manual(values = "#0098D4") + # Set edge color
-#   theme_void() +
-#   theme(legend.position = "none") + # Remove legend
-#   coord_fixed() +   
-#   scale_x_continuous(expand = expansion(c(1, 1))) +
-#   scale_y_continuous(expand = expansion(c(1, 1)))
+# # Set vertex names for demonstration
+# V(graph)$name <- c("A", "B", "C", "D", "E")
+# 
+# # Plot the graph with custom layout and edge color
+# londonUnderground_plot(graph, path_layout, color = "#0098D4")
+
+londonUnderground_plot <- function(graph, path_layout, color) {
+  ggraph(graph, layout = path_layout) + 
+    geom_edge_link(aes(color = "line"), width = 2) + # Customize the edge color and thickness
+    geom_node_point(color = "black", size = 8, shape = 21, fill = "white", stroke = 2) + # Customize the node color, outline, and size
+    geom_node_text(aes(label = name), nudge_y = 0.5, size = 4, fontface = "bold", color = "black") + # Avoid label overlap
+    scale_edge_color_manual(values = color) + # Set edge color based on argument
+    theme_void() +
+    theme(legend.position = "none") + # Remove legend
+    coord_fixed() +   
+    scale_x_continuous(expand = expansion(c(1, 1))) +
+    scale_y_continuous(expand = expansion(c(1, 1)))
+}
+
 
