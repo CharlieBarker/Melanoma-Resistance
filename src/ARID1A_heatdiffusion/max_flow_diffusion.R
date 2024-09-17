@@ -707,6 +707,43 @@ create_combined_plots <- function(sources, sinks, g, conv_nodes, factor_genes_na
   return(combined_plot)
 }
 
+plot_scaled_graph <- function(graph) {
+  # Scaling function to normalize flows within a reasonable range
+  scale_to_range <- function(x, min_size, max_size) {
+    scaled <- ((x - min(x)) / (max(x) - min(x))) * (max_size - min_size) + min_size
+    return(scaled)
+  }
+
+  # Get the flow values for nodes and edges
+  node_flow <- V(graph)$flow
+  edge_flow <- E(graph)$flow
+
+  # Check if flow attributes exist, and handle potential errors
+  if (is.null(node_flow)) stop("Node attribute 'flow' is missing")
+  if (is.null(edge_flow)) stop("Edge attribute 'flow' is missing")
+
+  # Scale node sizes (e.g., between 10 and 30) and edge widths (e.g., between 4 and 10)
+  scaled_node_size <- scale_to_range(node_flow, 10, 30)
+  scaled_edge_width <- scale_to_range(edge_flow, 4, 10)
+
+  # Plot the graph with dynamically scaled sizes and widths
+  plot(
+    graph,
+    vertex.size = scaled_node_size,            # Scaled node sizes
+    edge.width = scaled_edge_width,            # Scaled edge thickness
+    vertex.label = V(graph)$name,              # Label nodes by their 'name' attribute
+    edge.label = E(graph)$flow,                # Label edges by their 'flow' values
+    vertex.color = "lightblue",                # Set node color
+    edge.color = "gray",                       # Set edge color
+    vertex.frame.color = "transparent",        # Remove node outlines
+    vertex.label.family = "sans",              # Set text to Arial,
+    vertex.label.color="black"
+  )
+}
+
+# Now you can simply call this function with your graph
+
+
 
 
 # Load necessary libraries
@@ -714,7 +751,7 @@ library(ggplot2)
 library(patchwork)
 
 pdf(file = paste0("./results/heatdiffusion/shortestpath_results.pdf"),
-    width = 15, height = 25)
+    width = 15, height = 20)
 
 ######FOR EGFR etc to JUN######
 
@@ -760,11 +797,12 @@ sub_short_path_graph <- subgraph(short_path_graph, vids = vids)
 V(sub_short_path_graph)$name <- V(sub_short_path_graph)$Gene_name
 path_layout <- pathwayLayout(sub_short_path_graph, receptor_y_position = .3)$layout_matrix
 londonUnderground_plot(sub_short_path_graph, layout = path_layout, color = "#E32017")
+plot_scaled_graph(sub_short_path_graph)
 
 ######FOR EGFR etc to MAPK1######
 
 # Plot shortest paths from specific receptors to transcription factors
-sources <- c("EGFR", "ROS1", "FGFR1")
+sources <- c("EGFR", "ROS1")
 sinks =  c("MAPK1")
 
 
@@ -795,8 +833,27 @@ short_path_graph <- make_shortest_paths_plot(
   return_df = TRUE
 )
 # List of gene names with high flow
-selected_genes <- c("EGFR", "CRK", "IRS1",
-                    "GSK3B", "MAPK1", "MET", "FYN","PTK2", "PRKD1")
+selected_genes <- c("EGFR",
+"PTPN6",
+"CRK",
+"GSK3B",
+"MAPK1",
+"FYN",
+"FGFR2",
+"RPS6KA3",
+"MAPK3",
+"ABL2",
+"PTK2",
+"ROS1",
+"MAP3K3", "PRKD1", "DAPK1",
+"IGF1R",
+"ERBB3",
+"FGFR1",
+"HCK",
+"SYK",
+"NTRK2",
+"PRKCD"
+)
 
 # Find the vertex ids corresponding to the selected gene names
 vids <- which(V(short_path_graph)$Gene_name %in% selected_genes)
@@ -804,15 +861,20 @@ vids <- which(V(short_path_graph)$Gene_name %in% selected_genes)
 # Extract the subgraph using the vertex ids
 sub_short_path_graph <- subgraph(short_path_graph, vids = vids)
 V(sub_short_path_graph)$name <- V(sub_short_path_graph)$Gene_name
-path_layout <- pathwayLayout(sub_short_path_graph, receptor_y_position = .5)$layout_matrix
+
+path_layout<-layout_with_sugiyama(sub_short_path_graph
+                                  #,layers = c(1, 2, 1, 4, 4, 2, 5, 2, 5, 3, 4, 1)
+                                  )$layout #manually define layout layers
 londonUnderground_plot(sub_short_path_graph, layout = path_layout, color = "#FFD300")
+plot_scaled_graph(sub_short_path_graph)
+
 
 ######FOR ITGA4 etc to MAPK1######
 
 
 # Plot shortest paths from ITGA4 and NTRK3 to MAPK1
 sources <- c("ITGA4", "NTRK3")
-sinks =  c("MAPK1", "MAPK3")
+sinks =  c("MAPK1")
 
 # Call the function to generate and display the combined plot grid
 combined_plot <- create_combined_plots(
@@ -840,7 +902,7 @@ short_path_graph <- make_shortest_paths_plot(
   return_df = TRUE
 )
 # List of gene names with high flow
-selected_genes <- c("MAPK1","ITGA4","PRKACA","RPS6KA3","ETS1", "FOS", "GSK3B", "MAPK3")
+selected_genes <- c("MAPK1","ITGA4", "PRKACA","RPS6KA3","ETS2", "MAPK3")
 
 # Find the vertex ids corresponding to the selected gene names
 vids <- which(V(short_path_graph)$Gene_name %in% selected_genes)
@@ -848,8 +910,10 @@ vids <- which(V(short_path_graph)$Gene_name %in% selected_genes)
 # Extract the subgraph using the vertex ids
 sub_short_path_graph <- subgraph(short_path_graph, vids = vids)
 V(sub_short_path_graph)$name <- V(sub_short_path_graph)$Gene_name
-path_layout <- pathwayLayout(sub_short_path_graph, receptor_y_position = .5)$layout_matrix
+df <- classify_nodes(V(sub_short_path_graph)$name)
+layers <- ifelse(df$type == "receptor", 1, ifelse(df$type == "other", 2, 3))
+path_layout<-layout_with_sugiyama(sub_short_path_graph, layers = layers)$layout
 londonUnderground_plot(sub_short_path_graph, layout = path_layout, color = "#0098D4")
-
+plot_scaled_graph(sub_short_path_graph)
 dev.off()
 

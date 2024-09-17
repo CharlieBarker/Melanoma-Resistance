@@ -690,24 +690,30 @@ process_data_for_labeling <- function(data, x_col, y_col, label_col,
 }
 
 pdf(file = paste0("./results/heatdiffusion/heatdiffusion_scatters.pdf"),
-    width = 10, height = 10)
+    width = 10, height = 8)
 
 # Usage example
 L_df_processed <- process_data_for_labeling(L_df, "arid1a_up_probabilities", "combined_up_probabilities", "Gene_name")
+L_df_processed<-L_df_processed[arid1a_up_receptors == 0 | combined_up_receptors == 0,]
+
 ggplot(L_df_processed, aes(x=arid1a_up_probabilities, y=combined_up_probabilities, label=label_flag, color = is_receptor)) +
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : up receptors vs up") +
-  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()+ scale_color_manual(values=wes_palette("Chevalier1"))
+  ggrepel::geom_text_repel(size = 10, colour = "black") + cowplot::theme_cowplot()+ scale_color_manual(values=wes_palette("Chevalier1"))
 
 # basic scatterplot
 L_df_processed <- process_data_for_labeling(L_df, "arid1a_down_probabilities", "combined_down_probabilities", "Gene_name")
+L_df_processed<-L_df_processed[arid1a_down_receptors == 0 | combined_down_receptors == 0,]
+
 ggplot(L_df_processed, aes(x=arid1a_down_probabilities, y=combined_down_probabilities, label=label_flag, color = is_receptor)) +
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : down receptors vs down") +
-  ggrepel::geom_text_repel(size = 8, colour = "black") + cowplot::theme_cowplot()+ scale_color_manual(values=wes_palette("Chevalier1"))
+  ggrepel::geom_text_repel(size = 10, colour = "black") + cowplot::theme_cowplot()+ scale_color_manual(values=wes_palette("Chevalier1"))
 
 # basic scatterplot
 L_df_processed <- process_data_for_labeling(L_df, "arid1a_up_probabilities", "combined_down_probabilities", "Gene_name")
+L_df_processed<-L_df_processed[arid1a_up_receptors == 0 | combined_down_receptors == 0,]
+
 ggplot(L_df_processed, aes(x=arid1a_up_probabilities, y=combined_down_probabilities, label=label_flag, color = is_receptor)) +
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : up receptors vs down") +
@@ -715,6 +721,8 @@ ggplot(L_df_processed, aes(x=arid1a_up_probabilities, y=combined_down_probabilit
 
 # basic scatterplot
 L_df_processed <- process_data_for_labeling(L_df, "arid1a_down_probabilities", "combined_up_probabilities", "Gene_name")
+L_df_processed<-L_df_processed[arid1a_down_receptors == 0 | combined_up_receptors == 0,]
+
 ggplot(L_df_processed, aes(x=arid1a_down_probabilities, y=combined_up_probabilities, label=label_flag, color = is_receptor)) +
   geom_point() +
   ggtitle("Comparison of 'heat' of nodes in network : down receptors vs up") +
