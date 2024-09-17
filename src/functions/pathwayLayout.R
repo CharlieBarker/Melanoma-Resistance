@@ -114,7 +114,7 @@ pathwayLayout <- function(graph,
 # londonUnderground_plot(graph, path_layout, color = "#0098D4")
 londonUnderground_plot <- function(graph, layout, color) {
   ggraph(graph, layout = layout) +
-    geom_edge_bend(edge_colour = color, width = 4) +  # Apply constant color outside aes()
+    geom_edge_bend2(edge_colour = color, width = 4) +  # Apply constant color outside aes()
     geom_node_point(color = "black", size = 8, shape = 21, fill = "white", stroke = 3) +  # Customize the node color, outline, and size
     geom_node_text(aes(label = name), nudge_y = 0.5, size = 5, fontface = "bold", color = "black") +  # Avoid label overlap
     theme_void() +
