@@ -108,14 +108,14 @@ complete_df %>%
   geom_boxplot() +
   geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
   scale_fill_manual(values = drug_colors) +
-  ggtitle("mRNA abundances of central RTKs") +
+  ggtitle("mRNA and protein abundances of selected members of MAPK pathway") +
   xlab("Abundance") +  # Change x-axis label to "Abundance"
   ylab("Gene/Protein") +  # Change y-axis label to "Gene/Protein"
   cowplot::theme_cowplot() +
   facet_wrap(data ~ ko, scales = "free") +
   grids(linetype = "dashed") +
   theme(
-    plot.title = element_text(size = 15, face = "bold"),
+    plot.title = element_text(size = 20, face = "bold"),
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)  # Use linewidth instead of size
   )
 

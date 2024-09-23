@@ -6,6 +6,7 @@ library(stringr)
 library(purrr)
 library(viridis)
 library(hrbrthemes)
+library(ggpubr)
 
 all_abundace<-list(
   protein=read.csv(file = "./data/input_data/proteins.csv"),
@@ -51,7 +52,7 @@ sorger_feedback <- list(
   HRAS="P01112",   # HRas protein
   KRAS="P01116",   # KRas protein
   NRAS="P01111",   # NRas protein
-  
+
   # MAPK pathway components
   ARAF="P10398",   # A-Raf proto-oncogene serine/threonine-protein kinase
   BRAF="P15056",   # B-Raf proto-oncogene serine/threonine-protein kinase
@@ -60,16 +61,16 @@ sorger_feedback <- list(
   MAP2K2="P36507", # Mitogen-activated protein kinase kinase 2 (MEK2)
   MAPK3="P27361",  # Mitogen-activated protein kinase 3 (ERK1)
   MAPK1="P28482",  # Mitogen-activated protein kinase 1 (ERK2)
-  
+
   # Negative feedback regulators of MAPK
   DUSP4="Q13115",  # Dual specificity protein phosphatase 4
   DUSP6="Q16828",  # Dual specificity protein phosphatase 6
-  
+
   # Negative feedback regulators of EGFR
   ERRFI1="Q9UJM3", # ERBB receptor feedback inhibitor 1
   SPRY4="Q9C004",  # Protein sprouty homolog 4
   SPRY2="O43597",  # Protein sprouty homolog 2
-  
+
   # EGFR pathway components
   EGFR="P00533",   # Epidermal growth factor receptor
   GRB2="P62993",   # Growth factor receptor-bound protein 2
@@ -105,14 +106,14 @@ split_exp_conditions<-function(df, error=F){
   if (error) {
     df <- df %>%
       group_by(X, drug, ko) %>%
-      summarise( 
+      summarise(
         n=n(),
         mean=mean(value),
         sd=sd(value)
       ) %>%
       mutate( se=sd/sqrt(n))  %>%
       mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
-    
+
   }
 
   return(df)
