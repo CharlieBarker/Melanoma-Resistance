@@ -1,5 +1,5 @@
 
-#find correct environment 
+#find correct environment
 packLib="/usr/lib/R"
 if (file.exists(packLib)) {
   reticulate::use_condaenv("py37", required = T)
@@ -15,6 +15,8 @@ library(ggpubr)
 library(ggrepel)
 library(wesanderson)
 library(igraph)
+library(purrr)
+library(stringr)
 library(cowplot)
 
 kinomics_files<-list.files(path = "./data/kinomics//", full.names = T, recursive = T)
@@ -46,7 +48,7 @@ factorS <- c("Factor1", "Factor2", "Factor3")
 results_dir <- "./results/phuego/results/"
 factor_graphs<-list()
 
-#provisionally we need to find a way to make the phuego networks directed. 
+#provisionally we need to find a way to make the phuego networks directed.
 
 for (factor in factorS) {
   file_graphml_up<-paste0(results_dir, factor, "/increased/KDE_", KDE, "/networks/KDE.graphml")
@@ -60,10 +62,10 @@ for (factor in factorS) {
 get_nodes<-function(igraph_object, conv=F){
   nodes<-V(igraph_object)$name
   weights<-igraph::page_rank(igraph_object)
-  
+
   if (conv) {
-    genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = nodes, 
-                                         keytype = "UNIPROTID", 
+    genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = nodes,
+                                         keytype = "UNIPROTID",
                                          columns = "GENENAME")
     return(sort(genename_df$GENENAME))
   }
@@ -80,7 +82,7 @@ factor_nodes <- lapply(factor_graphs, function(sublist) {
 
 # Assuming kinase_list is a vector of kinase names you want to mark with stars
 kinase_list_all_factors <- list(Factor1=stack(factor_nodes$Factor1), #factor 1 describes changes in all drugs
-                                Factor2=stack(factor_nodes$Factor2), #factor 2 describes changes specific to combination 
+                                Factor2=stack(factor_nodes$Factor2), #factor 2 describes changes specific to combination
                                 Factor3=stack(factor_nodes$Factor3) #factor 3 describes ARID1A
                     )
 #this one works, we know at least
@@ -99,7 +101,7 @@ complete_results$experiment <- gsub("^ARID1A ", "", complete_results$experiment)
 complete_results$experiment <- gsub(".xlsx$", "", complete_results$experiment)
 
 complete_results$experiment <- factor(complete_results$experiment, levels = c("Vemurafenib vs Untreated", "Trametinib vs Untreated", "Combined vs Untreated",
-                                                                            "Combined vs Vemurafenib", "Combined vs Trametinib", 
+                                                                            "Combined vs Vemurafenib", "Combined vs Trametinib",
                                                                             "Combined ARID1A vs WT", "Trametinib ARID1A vs WT", "Vemurafenib ARID1A vs WT", "Untreated ARID1A vs WT"))
 
 drug_targets<-complete_results[complete_results$`Kinase Name` %in% c("ERK1", "BRAF", "PKD1", "JNK1", "JNK2", "JNK3"),]
@@ -107,9 +109,9 @@ drug_targets<-drug_targets[!grepl(drug_targets$experiment, pattern="ARID1A"),]
 pal <- wes_palette("Zissou1", 100, type = "continuous")
 
 
-ggplot(drug_targets[!is.na(drug_targets$experiment),], aes(x=`Kinase Name`, y=`Median Kinase Statistic`, 
+ggplot(drug_targets[!is.na(drug_targets$experiment),], aes(x=`Kinase Name`, y=`Median Kinase Statistic`,
                          colour=`Median Kinase Statistic`)) +
-  scale_colour_gradientn(colours = pal) + 
+  scale_colour_gradientn(colours = pal) +
   geom_hline(yintercept = 0, color = "black") + # Add horizontal line at y=0
   geom_segment(aes(x=`Kinase Name`, xend=`Kinase Name`, y=0, yend=`Median Kinase Statistic`), color="grey") +
   geom_point(aes(size = `Mean Specificity Score`)) +  # Adjust the size of points here
@@ -141,28 +143,28 @@ subset_results <- complete_results %>%
   )
 
 subset_results$centrality <- kinase_list$values[match(subset_results$`Kinase Uniprot ID`, rownames(kinase_list))]
-#plot kinomics over centrality 
+#plot kinomics over centrality
 
 # basic scatterplot with a line of best fit
 # Install ggpubr if it's not already installed
 # install.packages("ggpubr")
 
 ggplot(subset_results[!is.na(subset_results$centrality),],
-       aes(y = abs(`Median Kinase Statistic`), 
-           x = centrality, 
+       aes(y = abs(`Median Kinase Statistic`),
+           x = centrality,
            colour=`Median Kinase Statistic`, size = `Mean Specificity Score`)) +
-  scale_colour_gradientn(colours = pal) + 
-  geom_hline(yintercept = 0, color = "darkgrey", linetype="dashed") + # Add horizontal line at y=0  
+  scale_colour_gradientn(colours = pal) +
+  geom_hline(yintercept = 0, color = "darkgrey", linetype="dashed") + # Add horizontal line at y=0
   geom_smooth(method = "lm", se = T, size = 1, color="darkgrey") + # Add a line of best fit using linear regression
-  geom_point() + 
-  facet_wrap( ~ experiment, ncol = 2) + 
+  geom_point() +
+  facet_wrap( ~ experiment, ncol = 2) +
   theme_cowplot() +
   theme(legend.position = "bottom") + # Placing legend at the bottom
   geom_text_repel(aes(label = `Kinase Name`), colour = "black", size = 4, max.overlaps = 10) + # Apply label aesthetic here
   coord_cartesian(ylim = c(0, NA)) + # Set the lower limit of y-axis to 0
   stat_cor(method = "pearson", aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~")), label.x = 0, label.y = 1.5) + # Add Pearson correlation coefficient
   labs(x = "Centrality (PageRank)", y = "Absolute Median Kinase Statistic") # Add axis titles
-ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 25, height = 20, units = "cm")
+ggsave("./results/kinomics_microarray/factor1_scatter.pdf", width = 25, height = 25, units = "cm")
 
 
 
@@ -203,22 +205,22 @@ ggsave("./results/kinomics_microarray/box_plot_network.pdf", width = 40, height 
 
 
 plot <- ggplot(subset_results) +
-  geom_bar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), y = `Median Kinase Statistic`), 
+  geom_bar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), y = `Median Kinase Statistic`),
            stat = "identity", fill = "skyblue", alpha = 0.7) +
-  geom_errorbar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), 
-                    ymin = `Median Kinase Statistic` - `SD Kinase Statitistic`, 
-                    ymax = `Median Kinase Statistic` + `SD Kinase Statitistic`), 
-                width = 0.4, colour = "orange", alpha = 0.9, size = 1.3) + 
+  geom_errorbar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`),
+                    ymin = `Median Kinase Statistic` - `SD Kinase Statitistic`,
+                    ymax = `Median Kinase Statistic` + `SD Kinase Statitistic`),
+                width = 0.4, colour = "orange", alpha = 0.9, size = 1.3) +
   facet_wrap(~ experiment, scales = "free_x", nrow = 5) +
   labs(x = "Kinase Name", y = "Median Kinase Statistic") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 # Add stars to specific kinases in the list kinase_list
-plot<-plot + 
+plot<-plot +
   geom_text(data = subset(subset_results, `Kinase Uniprot ID` %in% kinase_list),
-            aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), 
-                y = `Median Kinase Statistic` + (`SD Kinase Statitistic` * 1.2), 
-                label = "*"), 
+            aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`),
+                y = `Median Kinase Statistic` + (`SD Kinase Statitistic` * 1.2),
+                label = "*"),
             vjust = 0, size = 3, color = "red", fontface = "bold")
 
 
@@ -230,22 +232,22 @@ ggsave("./paper/plots/kinomics_STK_barplot.pdf", plot, width = 30, height = 30, 
 
 ARID1A_KO<-complete_results[complete_results$arid1a_status == "ARID1A_KO" & complete_results$kinase_type == "STK",]
 plot <- ggplot(ARID1A_KO) +
-  geom_bar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), y = `Median Kinase Statistic`), 
+  geom_bar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), y = `Median Kinase Statistic`),
            stat = "identity", fill = "skyblue", alpha = 0.7) +
-  geom_errorbar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), 
-                    ymin = `Median Kinase Statistic` - `SD Kinase Statitistic`, 
-                    ymax = `Median Kinase Statistic` + `SD Kinase Statitistic`), 
-                width = 0.4, colour = "orange", alpha = 0.9, size = 1.3) + 
-  facet_wrap( ~ experiment, ncol = 2) + 
+  geom_errorbar(aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`),
+                    ymin = `Median Kinase Statistic` - `SD Kinase Statitistic`,
+                    ymax = `Median Kinase Statistic` + `SD Kinase Statitistic`),
+                width = 0.4, colour = "orange", alpha = 0.9, size = 1.3) +
+  facet_wrap( ~ experiment, ncol = 2) +
   labs(x = "Kinase Name", y = "Median Kinase Statistic") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 # Add stars to specific kinases in the list kinase_list
-plot<-plot + 
+plot<-plot +
   geom_text(data = subset(ARID1A_KO, `Kinase Uniprot ID` %in% kinase_list),
-            aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`), 
-                y = `Median Kinase Statistic` + (`SD Kinase Statitistic` * 1.2), 
-                label = "*"), 
+            aes(x = reorder(`Kinase Name`, `Mean Kinase Statistic`),
+                y = `Median Kinase Statistic` + (`SD Kinase Statitistic` * 1.2),
+                label = "*"),
             vjust = 0, size = 3, color = "red", fontface = "bold")
 # Save the plot to a PDF file
 ggsave("./paper/plots/ARID1A_KO_STK_barplot.pdf", plot, width = 20, height = 40, units = "in")
