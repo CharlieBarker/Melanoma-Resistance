@@ -22,6 +22,10 @@ library(OmnipathR)
 source("./src/functions/pathwayLayout.R")
 
 
+# for (variable in V(subnet)$Gene_name) {
+#   cat(variable, "\n")
+# }
+
 #######DIFFUSION#######
 
 #get list of receptors
