@@ -142,3 +142,52 @@ ggplot(drug_targets[!is.na(drug_targets$experiment),], aes(x=Gene_name, y=`Media
 
 
 dev.off()
+
+
+
+kinase_list<-kinase_list_all_factors$Factor1
+
+# Create the ggplot with ordered Kinase Name and stars for specific kinases
+subset_results <- complete_results %>%
+  dplyr::filter(arid1a_status == "WT") %>%
+  dplyr::filter(kinase_type == "STK") %>%
+  mutate(
+    in_network = `Kinase Uniprot ID` %in% rownames(kinase_list),
+    which_network = case_when(
+      `Kinase Uniprot ID` %in% rownames(kinase_list)[kinase_list$ind == "up"] ~ "up regulated network",
+      `Kinase Uniprot ID` %in% rownames(kinase_list)[kinase_list$ind == "down"] ~ "down regulated network",
+      TRUE ~ "outside network"
+    )
+  )
+
+subset_results$centrality <- kinase_list$values[match(subset_results$`Kinase Uniprot ID`, rownames(kinase_list))]
+#plot kinomics over centrality
+
+
+pdf(file = "~/Desktop/Melanoma_Resistance/results/kinomics_microarray/kinomics_slide.pdf",   # The directory you want to save the file in
+    width = 10,  # The width of the plot in inches
+    height = 10) # The height of the plot in inches
+drug_vs_untreated_subset<-subset_results[grep(subset_results$experiment, pattern = "treated"),]
+ggplot(drug_vs_untreated_subset[!is.na(drug_vs_untreated_subset$centrality),],
+       aes(y = abs(`Median Kinase Statistic`),
+           x = centrality,
+           colour=`Median Kinase Statistic`, size = `Mean Specificity Score`)) +
+  scale_colour_gradientn(colours = pal) +
+  geom_hline(yintercept = 0, color = "darkgrey", linetype="dashed") + # Add horizontal line at y=0
+  geom_smooth(method = "lm", se = T, size = 1, color="darkgrey") + # Add a line of best fit using linear regression
+  geom_point() +
+  facet_wrap( ~ experiment, ncol = 2) +
+  cowplot::theme_cowplot() +
+  theme(
+    plot.title = element_text(size = 15, face = "bold"),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+    axis.text.x = element_text(angle = 90, hjust = 1) # Rotate x-axis labels
+  ) +
+  grids(linetype = "dashed") +
+  geom_text_repel(aes(label = `Kinase Name`), colour = "black", size = 4, max.overlaps = 10) + # Apply label aesthetic here
+  coord_cartesian(ylim = c(0, NA)) + # Set the lower limit of y-axis to 0
+  stat_cor(method = "pearson", aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~")), label.x = 0, label.y = 1.5) + # Add Pearson correlation coefficient
+  labs(x = "Centrality (PageRank)", y = "Absolute Median Kinase Statistic") # Add axis titles
+dev.off()
+
+
