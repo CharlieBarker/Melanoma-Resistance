@@ -13,6 +13,7 @@ library(readxl)
 library(ggplot2)
 library(dplyr)
 library(ggpubr)
+library(diffusr)
 library(ggrepel)
 library(wesanderson)
 library(igraph)
@@ -313,7 +314,34 @@ complete_df<-rbind(data.frame(proteins_df, data="Protein abundace"),
                    data.frame(rna_df, data="mRNA abundace"))
 
 
-pdf(file = "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/test.pdf",   # The directory you want to save the file in
+library(ggraph)
+
+pdf(file = "~/Desktop/Melanoma_Resistance/results/heatdiffusion/ephrin_activity_diffusion.pdf",   # The directory you want to save the file in
+    width = 10,  # The width of the plot in inches
+    height = 10) # The height of the plot in inches
+
+ephrin_heat$label=""
+ephrin_heat$label[ephrin_heat$dist>0.005] = ephrin_heat$name[ephrin_heat$dist>0.005]
+
+# Create a volcano plot with color coding for seeds and labels
+ggplot(ephrin_heat, aes(x = -log10(p_values), y = dist, size = -log10(p_values), color = in_seed)) +
+  geom_point(fill = "steelblue") +  # Points with specified fill color
+  labs(title = "Random Walk from activated Ephrin receptors",
+       x = "-Log10(P-Values)",  # X-axis label
+       y = "Stationary Probability") +  # Y-axis label
+  scale_color_manual(values = c("TRUE" = "darkorange", "FALSE" = "lightblue"), name = "In Seed") +  # Custom colors
+  geom_text_repel(aes(label = label, colour="black"),size = 8) +  # Add labels
+  theme_cowplot() +
+  grids(linetype = "dashed") +
+  theme(axis.text.y = element_text(size = 12),  # Adjust y-axis text size
+        axis.text.x = element_text(size = 12, angle = 45, hjust = 1),  # Tilt x-axis labels
+        plot.title = element_text(size = 16, face = "bold"),
+        panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)) +
+  guides(size = guide_legend(title = "-Log10(P-Values)"), color = guide_legend(title = "In Seed"))
+
+dev.off()
+
+pdf(file = "~/Desktop/Melanoma_Resistance/results/heatdiffusion/ephrin_heat.pdf",   # The directory you want to save the file in
     width = 25,  # The width of the plot in inches
     height = 20) # The height of the plot in inches
 
@@ -342,23 +370,6 @@ ggplot(wide_receptors_affected, aes(x = ARID1A_KO, y = WT)) +
     max.overlaps = Inf,  # Avoid limit on label overlaps
     min.segment.length = 0  # Draw segment lines for all labels
   )
-
-
-# Create a volcano plot with color coding for seeds and labels
-ggplot(ephrin_heat, aes(x = -log10(p_values), y = dist, size = -log10(p_values), color = in_seed)) +
-  geom_point(fill = "steelblue") +  # Points with specified fill color
-  labs(title = "Volcano Plot of Gene Expression",
-       x = "-Log10(P-Values)",  # X-axis label
-       y = "Distance") +  # Y-axis label
-  scale_color_manual(values = c("TRUE" = "darkorange", "FALSE" = "lightblue"), name = "In Seed") +  # Custom colors
-  geom_text(aes(label = name, colour="black"), hjust = 1.2, vjust = 0.5, size = 6, check_overlap = TRUE) +  # Add labels
-  theme_cowplot() +
-  theme(axis.text.y = element_text(size = 12),  # Adjust y-axis text size
-        axis.text.x = element_text(size = 12, angle = 45, hjust = 1),  # Tilt x-axis labels
-        plot.title = element_text(size = 16, face = "bold"),
-        panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)) +
-  guides(size = guide_legend(title = "-Log10(P-Values)"), color = guide_legend(title = "In Seed"))
-
 
 complete_df %>%
   ggplot(aes(y = value, x = ko, fill = drug)) +
