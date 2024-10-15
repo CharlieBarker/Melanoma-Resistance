@@ -79,16 +79,9 @@ get_nodes<-function(igraph_object, conv=F){
 
 #get nodes from all graphs
 factor_nodes <- lapply(factor_graphs, function(sublist) {
-  sapply(sublist, get_nodes)
+  sapply(sublist, get_nodes, T)
 })
 
-
-# Assuming kinase_list is a vector of kinase names you want to mark with stars
-kinase_list_all_factors <- list(Factor1=stack(factor_nodes$Factor1), #factor 1 describes changes in all drugs
-                                Factor2=stack(factor_nodes$Factor2), #factor 2 describes changes specific to combination
-                                Factor3=stack(factor_nodes$Factor3) #factor 3 describes ARID1A
-)
-#this one works, we know at least
 
 complete_results$arid1a_status<-unlist(map(str_split(complete_results$background, pattern = "__"),2))
 complete_results$kinase_type<-unlist(map(str_split(complete_results$background, pattern = "__"),1))
