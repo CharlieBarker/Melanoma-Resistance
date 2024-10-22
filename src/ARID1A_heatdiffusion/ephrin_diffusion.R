@@ -1,4 +1,3 @@
-load('./results/heatdiffusion/data_for_heat_diffusion.Rdata')
 
 #find correct environment
 packLib="/usr/lib/R"
@@ -8,6 +7,7 @@ if (file.exists(packLib)) {
 }else {
   setwd(dir = "~/Desktop/Melanoma_Resistance/")
 }
+load('./results/heatdiffusion/data_for_heat_diffusion.Rdata')
 
 library(readxl)
 library(ggplot2)
@@ -323,14 +323,13 @@ pdf(file = "~/Desktop/Melanoma_Resistance/results/heatdiffusion/ephrin_activity_
 ephrin_heat$label=""
 ephrin_heat$label[ephrin_heat$dist>0.005] = ephrin_heat$name[ephrin_heat$dist>0.005]
 
-# Create a volcano plot with color coding for seeds and labels
-ggplot(ephrin_heat, aes(x = -log10(p_values), y = dist, size = -log10(p_values), color = in_seed)) +
-  geom_point(fill = "steelblue") +  # Points with specified fill color
+ggplot(ephrin_heat[ephrin_heat$in_seed==F,], aes(x = -log10(p_values), y = dist, size = -log10(p_values), color = in_seed)) +
+  geom_point() +  # Points with specified fill color
   labs(title = "Random Walk from activated Ephrin receptors",
        x = "-Log10(P-Values)",  # X-axis label
        y = "Stationary Probability") +  # Y-axis label
-  scale_color_manual(values = c("TRUE" = "darkorange", "FALSE" = "lightblue"), name = "In Seed") +  # Custom colors
-  geom_text_repel(aes(label = label, colour="black"),size = 8) +  # Add labels
+  scale_color_manual(values = c("TRUE" = "darkorange", "FALSE" = "#446455ff"), name = "In Seed") +  # Custom colors
+  geom_text_repel(aes(label = label), colour = "black", size = 8) +  # Add labels with black color
   theme_cowplot() +
   grids(linetype = "dashed") +
   theme(axis.text.y = element_text(size = 12),  # Adjust y-axis text size
