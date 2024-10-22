@@ -1,5 +1,5 @@
 
-#find correct environment 
+#find correct environment
 packLib="/usr/lib/R"
 if (file.exists(packLib)) {
   reticulate::use_condaenv("py37", required = T)
@@ -32,14 +32,14 @@ Abs<-F #are we looking at up and down regulation seperately?
 
 
 
-readr::local_edition(1) 
+readr::local_edition(1)
 
-#get mofa weights 
+#get mofa weights
 MOFAobject.trained<-load_model(file = "./results/mofa/mofa_object.hdf5")
 
-weights <- get_weights(MOFAobject.trained, 
-                       views = "all", 
-                       as.data.frame = TRUE 
+weights <- get_weights(MOFAobject.trained,
+                       views = "all",
+                       as.data.frame = TRUE
 )
 weights$node<-unlist(map(str_split(weights$feature, pattern = "_"),1))
 weights$node<-unlist(map(str_split(weights$node, pattern = ";"),1))
@@ -50,15 +50,15 @@ factorS <- c("Factor1", "Factor2", "Factor3")
 results_dir <- "./results/phuego/results/"
 factor_centrality<-list()
 
-#provisionally we need to find a way to make the phuego networks directed. 
+#provisionally we need to find a way to make the phuego networks directed.
 
 for (factor in factorS) {
   file_graphml_up<-paste0(results_dir, factor, "/increased/KDE_", KDE, "/networks/KDE.graphml")
   file_graphml_down<-paste0(results_dir, factor, "/decreased/KDE_", KDE, "/networks/KDE.graphml")
   up_graph<-read_graph(file=file_graphml_up,format = "graphml")
-  centrality_df<-rbind(data.frame(centrality = degree(read_graph(file=file_graphml_up,format = "graphml")), 
+  centrality_df<-rbind(data.frame(centrality = degree(read_graph(file=file_graphml_up,format = "graphml")),
                                   direction = "Up regulated"),
-             data.frame(centrality = degree(read_graph(file=file_graphml_down,format = "graphml")), 
+             data.frame(centrality = degree(read_graph(file=file_graphml_down,format = "graphml")),
                         direction = "Down regulated"))
   centrality_df$uniprot<-rownames(centrality_df)
   factor_centrality[[factor]]<-centrality_df
@@ -66,23 +66,23 @@ for (factor in factorS) {
 
 factor_centrality_df<-bind_rows(factor_centrality, .id = "factor")
 
-genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = factor_centrality_df$uniprot, 
-                                      keytype = "UNIPROTID", 
+genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = factor_centrality_df$uniprot,
+                                      keytype = "UNIPROTID",
                                       columns = "GENENAME")
 factor_centrality_df$genename<-genename_df$GENENAME[match(factor_centrality_df$uniprot, genename_df$UNIPROTID)]
 
-# Summarize the weights by sum, accross the views 
+# Summarize the weights by sum, accross the views
 summarized_weights <- weights %>%
   group_by(factor, node) %>%
   summarise(value = sum(value)) %>%
   ungroup()
 
-to_plot<-merge(x = factor_centrality_df, y = summarized_weights, 
+to_plot<-merge(x = factor_centrality_df, y = summarized_weights,
       by.x=c("factor", "genename"), by.y=c("factor", "node"))
 to_plot<-to_plot[to_plot$centrality!=0,]
 # Your ggplot code
 panelA <- ggplot(to_plot[to_plot$factor=="Factor3",], aes(x=value, y=centrality, color=direction, label=genename)) +
-  geom_point() + 
+  geom_point() +
   geom_text_repel(data = to_plot[to_plot$factor=="Factor3",], color="black",
                   aes(label=ifelse(xor(abs(value) > 1, centrality > 3), genename, '')),
                   min.segment.length = 0, seed = 42, box.padding = 0.5, nudge_y = 0.1) +
@@ -144,20 +144,20 @@ panelB <- rtk_mrna %>%
     axis.text.x = element_text(angle = 70, hjust = 1, size = rel(1)),
   ) +
   xlab("") +
-  facet_wrap(~X, scales = "free_y", nrow = 3) + 
+  facet_wrap(~X, scales = "free_y", nrow = 3) +
   grids(linetype = "dashed") +
   labs(
     x = "Genetic background",
     y = "RNA abundance"
   )
 
-#get tf activities 
-arid1a_tf_acts<-read.csv(file = "./results/transcriptomics/tf_activity/arid1a_tf_acts.csv")
-arid1a_tf_pval<-read.csv(file = "./results/transcriptomics/tf_activity/arid1a_tf_pval.csv")
+#get tf activities
+arid1a_tf_acts<-read.csv(file = "./results/tf_activity/Untreated_WT_vs_Untreated_ARID1A_KO_tf_acts.csv")
+arid1a_tf_pval<-read.csv(file = "./results/tf_activity/Untreated_WT_vs_Untreated_ARID1A_KO_tf_pval.csv")
 arid1a_tf<-merge(arid1a_tf_acts,arid1a_tf_pval,by="X")
 colnames(arid1a_tf)<-c("TF", "Activity", "P_val")
 arid1a_tf$diffexpressed <- arid1a_tf$Activity < 0
-arid1a_tf$diffexpressed[arid1a_tf$P_val>0.1] <- "Not significant"
+arid1a_tf$diffexpressed[arid1a_tf$P_val>0.25] <- "Not significant"
 arid1a_tf$diffexpressed [arid1a_tf$diffexpressed == T] <- "Downregulated"
 arid1a_tf$diffexpressed [arid1a_tf$diffexpressed == F] <- "Upregulated"
 arid1a_tf$label<-arid1a_tf$TF
@@ -165,7 +165,7 @@ arid1a_tf$TF[arid1a_tf$diffexpressed=="Not significant"]<- ""
 
 # Your ggplot code
 panelC <- ggplot(arid1a_tf, aes(x=Activity, y=-log10(P_val), color=diffexpressed, label=label)) +
-  geom_point() + 
+  geom_point() +
   geom_text_repel(color="black",
                   min.segment.length = 0, seed = 42, box.padding = 0.5, nudge_y = 0.1) +
   geom_vline(xintercept = 0, linetype = "dotted", color = "red") +  # Add dotted red line at x = 0
@@ -174,17 +174,18 @@ panelC <- ggplot(arid1a_tf, aes(x=Activity, y=-log10(P_val), color=diffexpressed
   scale_color_manual(values = wes_palette("Darjeeling1")) + grids()
 
 #panel C - RFX5, RFXAP, CIITA and TWIST1
-#collectri<-OmnipathR::collectri(organism=9606L, genesymbols=TRUE, loops=TRUE)
-tfs_of_interest<-collectri[collectri$source_genesymbol %in% c("RFX5", "RFXAP", "CIITA", "TWIST1"),]
+collectri <- get_collectri(organism = 'human', split_complexes = FALSE)
+
+tfs_of_interest<-collectri[collectri$source %in% c("RFX5", "SMAD4", "CIITA", "TWIST1"),]
 
 #print lfc for genes in tf regulons ARID1A - so that we can generate figure 4
-arid1a_gene_lfc<-read.csv(file = "./results/transcriptomics/arid1a_lfc.csv")
+arid1a_gene_lfc<-read.csv(file = "./results/transcriptomics/Untreated_WT_vs_Untreated_ARID1A_KO_lfc.csv")
 
 
-vol_in<-rbind(data.frame(arid1a_gene_lfc, TF="RFX5", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target_genesymbol[tfs_of_interest$source_genesymbol=="RFX5"]),
-              data.frame(arid1a_gene_lfc, TF="RFXAP", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target_genesymbol[tfs_of_interest$source_genesymbol=="RFXAP"]),
-              data.frame(arid1a_gene_lfc, TF="CIITA", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target_genesymbol[tfs_of_interest$source_genesymbol=="CIITA"]),
-              data.frame(arid1a_gene_lfc, TF="TWIST1", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target_genesymbol[tfs_of_interest$source_genesymbol=="TWIST1"]))
+vol_in<-rbind(data.frame(arid1a_gene_lfc, TF="RFX5", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target[tfs_of_interest$source=="RFX5"]),
+              data.frame(arid1a_gene_lfc, TF="SMAD4", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target[tfs_of_interest$source=="SMAD4"]),
+              data.frame(arid1a_gene_lfc, TF="CIITA", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target[tfs_of_interest$source=="CIITA"]),
+              data.frame(arid1a_gene_lfc, TF="TWIST1", in_regulon=arid1a_gene_lfc$gene_symbol %in% tfs_of_interest$target[tfs_of_interest$source=="TWIST1"]))
 vol_in$X<-NULL
 vol_in$label<-""
 vol_in$label[vol_in$in_regulon]<-vol_in$gene_symbol[vol_in$in_regulon]
@@ -199,22 +200,22 @@ vol_in$label <- ifelse((vol_in$log2FoldChange >= -0.5 & vol_in$log2FoldChange <=
 vol_in$colour <- ifelse((vol_in$log2FoldChange >= -0.5 & vol_in$log2FoldChange <= 0.5) | vol_in$padj >= 0.1, "darkgrey", "darkred")
 
 # Your existing ggplot code
-panelD<- ggplot(vol_in, 
+panelD<- ggplot(vol_in,
                        aes(log2FoldChange, -log10(padj), color = colour, label=label)) +
-  geom_point() + 
+  geom_point() +
   geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed") + # Vertical lines
   geom_hline(yintercept = 1, linetype = "dashed") +        # Horizontal line
-  ylab("Log10(Adjusted P value)") + xlab("Log fold change") + facet_wrap(~TF, scales = "free") +
+  ylab("Log10(Adjusted P value)") + xlab("Log fold change") + facet_wrap(~TF, scales = "free_y") +
   cowplot::theme_cowplot()+
-  geom_text_repel(min.segment.length = 0, seed = 42, box.padding = 0.5, colour="black") + 
+  geom_text_repel(min.segment.length = 0, seed = 42, box.padding = 0.5, colour="black") +
   theme(legend.position="none") +
   scale_colour_manual(values = wes_palette("Royal1"))
 
 
 pdf(# The directory you want to save the file in
-  width = 20, # The width of the plot in inches
-  height = 15,
+  width = 15, # The width of the plot in inches
+  height = 8,
   file = "./paper/Figures/ARID1a_figure.pdf")
 # Showing plot
-ggarrange(panelA, panelB, panelC,panelD, ncol = 2, nrow = 2, labels = "AUTO")
+ggarrange(panelC,panelD, ncol = 2, labels = "AUTO")
 dev.off()
