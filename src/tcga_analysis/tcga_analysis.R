@@ -135,3 +135,131 @@ pdf(# The directory you want to save the file in
 
 violin_plot
 dev.off()
+
+
+
+#see the levels of these in ARID1A mutant patients.
+library(edgeR)
+# Reshape the data to have genes as columns and conditions as rows
+wide_data <- data_subset %>%
+  dplyr::select(source, condition, score) %>%
+  pivot_wider(names_from = source, values_from = score)
+wide_data$is_ARID1a_mutant <- wide_data$condition %in% samples_arid1a_affected$samples
+
+meta_data<-data.frame(patient = wide_data$condition, is_ARID1A_affected = wide_data$is_ARID1a_mutant)
+mm <- model.matrix(~0 + is_ARID1A_affected, data = meta_data)
+# d0 <- calcNormFactors(counts)
+keep <- filterByExpr(counts, mm)
+counts_to_keep <- counts[keep,]
+# logcpm <- cpm(counts_to_keep, log=TRUE)
+y <- voom(counts_to_keep, mm, plot = T)
+fit <- lmFit(y, mm)
+
+contr <- makeContrasts(is_ARID1A_affectedTRUE - is_ARID1A_affectedFALSE, levels = colnames(coef(fit)))
+tmp <- contrasts.fit(fit, contr)
+tmp <- eBayes(tmp)
+top.table <- topTable(tmp, adjust.method = "BH", sort.by = "P", n = Inf)
+
+
+# Extract t-values per gene
+deg <- top.table %>%
+  dplyr::select(logFC, t, adj.P.Val) %>%
+  dplyr::filter(!is.na(t)) %>%
+  as.matrix()
+
+write.csv(x = deg, file = "./results/tcga_lfc/arid1a_mutant_vs_wt.csv")
+# Run ulm
+contrast_acts <- decoupleR::run_ulm(mat = deg[, 't', drop = FALSE],
+                                    net = net,
+                                    .source = 'source',
+                                    .target = 'target',
+                                    .mor='mor',
+                                    minsize = 10)
+
+# Filter top TFs in both signs
+f_contrast_acts <- contrast_acts %>%
+  dplyr::mutate(rnk = NA)
+msk <- f_contrast_acts$score > 0
+f_contrast_acts[msk, 'rnk'] <- rank(-f_contrast_acts[msk, 'score'])
+f_contrast_acts[!msk, 'rnk'] <- rank(-abs(f_contrast_acts[!msk, 'score']))
+tfs <- f_contrast_acts %>%
+  dplyr::arrange(rnk) %>%
+  dplyr::pull(source)
+f_contrast_acts <- f_contrast_acts %>%
+  dplyr::filter(source %in% tfs)
+colors <- rev(RColorBrewer::brewer.pal(n = 11, name = "RdBu")[c(2, 10)])
+
+
+p <- ggplot2::ggplot(data = f_contrast_acts[f_contrast_acts$p_value < 0.001,],
+                     mapping = ggplot2::aes(x = stats::reorder(source, score),
+                                            y = score)) +
+  ggplot2::geom_bar(mapping = ggplot2::aes(fill = score),
+                    color = "black",
+                    stat = "identity") +
+  ggplot2::scale_fill_gradient2(low = colors[1],  # Blue (downregulated)
+                                mid = "whitesmoke",
+                                high = colors[2], # Red (upregulated)
+                                midpoint = 0) +
+  cowplot::theme_cowplot() +
+  theme(
+    plot.title = element_text(size = 15, face = "bold"),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+    axis.text.y = element_text(angle = 45, hjust = 1), # Rotating y-axis labels
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotating x-axis labels
+  ) +
+  grids(linetype = "dashed") +
+  ggplot2::xlab("Transcription Factors (TFs)") +
+  ggplot2::ylab("Score (TF Activity)") +
+  ggplot2::ggtitle("Top Transcription Factors in ARID1A Mutant vs. Non-Mutant Melanoma Patients") +
+  ggplot2::labs(fill = "Activity Score")
+
+
+
+
+pdf(# The directory you want to save the file in
+  width = 10, # The width of the plot in inches
+  height = 4,
+  file = "./results/tcga_analysis/tf_activity_true_vs_false.pdf")
+# Showing plot
+
+p
+dev.off()
+
+
+
+#panel C - RFX5, RFXAP, CIITA and TWIST1
+
+vol_in<-rbind(data.frame(deg, TF="RFX5", in_regulon=rownames(deg) %in% net$target[net$source=="RFX5"]),
+              data.frame(deg, TF="RFXAP", in_regulon=rownames(deg) %in% net$target[net$source=="RFXAP"]),
+              data.frame(deg, TF="CIITA", in_regulon=rownames(deg) %in% net$target[net$source=="CIITA"]),
+              data.frame(deg, TF="TWIST1", in_regulon=rownames(deg) %in% net$target[net$source=="TWIST1"]),
+              data.frame(deg, TF="JUN", in_regulon=rownames(deg) %in% net$target[net$source=="JUN"]),
+              data.frame(deg, TF="ARID1A", in_regulon=rownames(deg) %in% net$target[net$source=="ARID1A"]))
+
+vol_in$X<-NULL
+vol_in$label<-""
+vol_in$label[vol_in$in_regulon]<-rownames(vol_in)[vol_in$in_regulon]
+vol_in<-vol_in[vol_in$in_regulon,]
+
+# Define alpha values based on 'below'
+alpha_values <- ifelse(!vol_in$in_regulon, 0.05, 1)
+
+# Create labels based on conditions
+vol_in$label <- ifelse((vol_in$logFC >= -0.5 & vol_in$logFC <= 0.5) | vol_in$adj.P.Val >= 0.01, "", vol_in$label)
+vol_in$colour <- ifelse((vol_in$logFC >= -0.5 & vol_in$logFC <= 0.5) | vol_in$adj.P.Val >= 0.01, "darkgrey", "darkred")
+library(wesanderson)
+# Your existing ggplot code
+ggplot(vol_in, aes(logFC, -log10(adj.P.Val), color = colour, label=label)) +
+  geom_point() +
+  geom_vline(xintercept = c(-0.5, 0.5), linetype = "dashed") + # Vertical lines
+  geom_hline(yintercept = 1, linetype = "dashed") +        # Horizontal line
+  ylab("Log10(Adjusted P value)") + xlab("Log fold change") + facet_wrap(~TF, scales = "free") +
+  cowplot::theme_cowplot()+
+  geom_text_repel(min.segment.length = 0, seed = 42, box.padding = 0.5, colour="black") +
+  theme(legend.position="none") +
+  scale_colour_manual(values = wes_palette("Royal1"))
+
+
+
+
+
