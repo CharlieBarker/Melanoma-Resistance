@@ -5,7 +5,7 @@ library(igraph)
 library(dplyr)
 library(tidyr)
 
-names_for_subnet <-factor_centrality$ind[factor_centrality$rank < 50] 
+names_for_subnet <-factor_centrality$ind[factor_centrality$rank < 50]
 
 ####prep data for pcsf#####
 terminal<-rep(1, length(names_for_subnet))
@@ -24,7 +24,7 @@ subnet <- PCSF_rand(g,
                     r = r,
                     w = w,
                     b = b,
-                    mu = mu) 
+                    mu = mu)
 
 subnet_l <- igraph::layout_with_graphopt(subnet)
 V(subnet)$Gene_name <- conv_nodes$gene_name[match(V(subnet)$name, conv_nodes$uniprt)]
@@ -48,7 +48,7 @@ add_factor_view_columns <- function(df, weights_in, factor) {
     dplyr::select(node, mRNA, protein)
   df <- df %>%
     left_join(factor_weights_subset, by = c("Gene_name" = "node")) %>%
-    rename_with(~ paste0(., "_", factor), c(mRNA, protein)) 
+    rename_with(~ paste0(., "_", factor), c(mRNA, protein))
   return(df)
 }
 
@@ -60,22 +60,22 @@ L_df <- L_df %>%
 
 
 
-pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/plots/PCSF_Factor2.pdf"), 
+pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/networks/test.pdf"),
     width = 18, height = 15)
 # Generate the plot
-ggraph(subnet, layout = subnet_l) + 
-  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
-             aes(x = x, y = y, colour = protein_Factor1), 
+ggraph(subnet, layout = subnet_l) +
+  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",],
+             aes(x = x, y = y, colour = protein_Factor1),
              alpha = 1, size = 10,
              stroke = 5) +
-  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",], 
-             aes(x = x, y = y, colour = mRNA_Factor1), 
+  geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",],
+             aes(x = x, y = y, colour = mRNA_Factor1),
              alpha = 1, size = 6,
-             stroke = 5) + 
+             stroke = 5) +
   geom_edge_link(start_cap = circle(3, 'mm'),
-                 end_cap = circle(3, 'mm'), 
-                 aes(alpha = weight)) + 
-  geom_node_point(size = 5) + 
+                 end_cap = circle(3, 'mm'),
+                 aes(alpha = weight)) +
+  geom_node_point(size = 5) +
   coord_fixed() + theme_void() +
   geom_node_label(aes(label = Gene_name),size=4, repel = FALSE) +
   theme(legend.position = "bottom") + # Placing legend at the bottom
