@@ -148,10 +148,10 @@ wide_data$is_ARID1a_mutant <- wide_data$condition %in% samples_arid1a_affected$s
 
 meta_data<-data.frame(patient = wide_data$condition, is_ARID1A_affected = wide_data$is_ARID1a_mutant)
 mm <- model.matrix(~0 + is_ARID1A_affected, data = meta_data)
-# d0 <- calcNormFactors(counts)
+dge <- DGEList(counts)
+dge <- calcNormFactors(dge)
 keep <- filterByExpr(counts, mm)
-counts_to_keep <- counts[keep,]
-# logcpm <- cpm(counts_to_keep, log=TRUE)
+counts_to_keep <- dge[keep,]
 y <- voom(counts_to_keep, mm, plot = T)
 fit <- lmFit(y, mm)
 
@@ -190,7 +190,7 @@ f_contrast_acts <- f_contrast_acts %>%
 colors <- rev(RColorBrewer::brewer.pal(n = 11, name = "RdBu")[c(2, 10)])
 
 
-p <- ggplot2::ggplot(data = f_contrast_acts[f_contrast_acts$p_value < 0.001,],
+p <- ggplot2::ggplot(data = f_contrast_acts[f_contrast_acts$p_value < 0.05,],
                      mapping = ggplot2::aes(x = stats::reorder(source, score),
                                             y = score)) +
   ggplot2::geom_bar(mapping = ggplot2::aes(fill = score),
