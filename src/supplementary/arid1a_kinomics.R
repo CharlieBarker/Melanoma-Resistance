@@ -111,7 +111,6 @@ simplified_colnames <- sapply(colnames(experiment_matrix), simplify_column_names
 
 # Set the new column names
 colnames(experiment_matrix) <- simplified_colnames
-experiment_matrix$in_network <- experiment_matrix$`Kinase Uniprot ID` %in% unlist(lapply(kinase_list_all_factors, rownames))
 library(ggplot2)
 library(ggrepel)
 library(cowplot)
@@ -133,7 +132,7 @@ create_plot <- function(data, kinase_type) {
     grids(linetype = "dashed") +
     xlab(paste("Kinase Activity in ARID1A (Combined vs Untreated)")) +
     ylab("Kinase Activity in WT (Combined vs Untreated)") +
-    ggtitle(paste(kinase_type, "Kinase Activity Comparison")) +
+    ggtitle(paste(kinase_type, "Activity Comparison")) +
 
     # Add axis lines
     geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
@@ -164,6 +163,54 @@ pdf(file = "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/kinomics_ari
     height = 6) # The height of the plot in inches
 
 # Display the plots
-plot_grid(ptk_plot, stk_plot, labels = c("A", "B"))
+plot_grid(ptk_plot, stk_plot)
+
+dev.off()
+
+
+pdf(file = "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/kinomics_variance.pdf",   # The directory you want to save the file in
+    width = 8,  # The width of the plot in inches
+    height = 10) # The height of the plot in inches
+
+# Rank by Median Kinase Statistic within each experiment and create a new column for rank
+df_ranked <- complete_results[!grepl(complete_results$experiment, pattern = "ARID1A"),] %>%
+  mutate(experiment = sub("\\.xlsx$", "", experiment)) %>%  # Remove .xlsx from the end of experiment
+  group_by(experiment) %>%
+  arrange(desc(`Median Kinase Statistic`)) %>%
+  mutate(Rank = row_number()) %>%
+  ungroup() # Ungroup to avoid issues in ggplot
+
+# Calculate the variance for each experiment and add it as a new column
+df_variance <- df_ranked %>%
+  group_by(experiment) %>%
+  summarise(variance = var(`Median Kinase Statistic`, na.rm = TRUE)) %>%
+  ungroup()
+
+# Merge the variance data back into the main dataframe
+df_ranked <- df_ranked %>%
+  left_join(df_variance, by = "experiment")
+df_ranked$experiment <- factor(x = df_ranked$experiment,
+                               levels = df_variance$experiment[order(df_variance$variance, decreasing = T)])
+# Plot using ggplot2
+ggplot(df_ranked, aes(y = Rank, x = `Median Kinase Statistic`)) +
+  geom_point(color = "darkblue") +
+  labs(title = "Median kinase statistic vs rank showing variance",
+       y = "Rank",
+       x = "Median Kinase Statistic") +
+  facet_wrap(~ experiment, ncol = 1) +
+  cowplot::theme_cowplot() +
+  theme(
+    plot.title = element_text(size = 15, face = "bold"),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+    axis.text.x = element_text(angle = 90, hjust = 1) # Rotate x-axis labels
+  ) +
+  grids(linetype = "dashed") +
+
+  # Add red dotted lines at x = -1.5 and x = 1.5
+  geom_vline(xintercept = c(-1.5, 1.5), linetype = "dotted", color = "red", size = 1) +
+
+  # Add label for variance for each experiment
+  geom_text(data = df_variance, aes(x = 1.5, y = 100, label = paste("Variance: ", round(variance, 2))),
+            color = "black", size = 4, fontface = "bold", inherit.aes = FALSE)
 
 dev.off()
