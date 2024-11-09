@@ -301,3 +301,65 @@ ggraph(g3, layout = "fr") +
 
 # Close PDF device
 dev.off()
+
+
+pdf(file = "paper/Supplementary_plots/big_networks_centrality.pdf", width = 6, height = 6)
+
+# Load required libraries
+library(igraph)
+library(ggplot2)
+library(dplyr)
+library(ggrepel) # for non-overlapping text labels
+
+# Define function to compute PageRank centrality and plot it
+plot_pagerank_centrality <- function(graph, graph_name) {
+  # Compute PageRank centrality
+  pagerank_values <- page.rank(graph)$vector
+
+  # Create a data frame with centrality values and ranks
+  df <- data.frame(Node = V(graph)$Gene_name, Centrality = pagerank_values, direction = V(graph)$consensus_direction) %>%
+    arrange(desc(Centrality)) %>%
+    mutate(Rank = row_number())
+  # Replace values in the 'direction' column
+  df <- df %>%
+    mutate(direction = case_when(
+      direction == "up__NA" ~ "upregulated network",
+      direction == "NA__down" ~ "downregulated network",
+      TRUE ~ direction  # Keep other values as they are
+    ))
+
+  # Plot using ggplot2
+  ggplot(df, aes(x = Rank, y = Centrality)) +
+    geom_point(color = "darkred") +
+    geom_text_repel(data = df %>% dplyr::filter(Rank <= 50), # Filter for top 50 nodes
+                    aes(label = Node),
+                    size = 3,
+                    box.padding = 0.3,
+                    max.overlaps = 50) + # Limits label overlaps to 50 labels
+    labs(title = paste("PageRank Centrality vs. Rank for", graph_name),
+         x = "Rank",
+         y = "PageRank Centrality") +
+    facet_wrap(~direction) +
+    cowplot::theme_cowplot() +
+    theme(
+      plot.title = element_text(size = 15, face = "bold"),
+      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(angle = 90, hjust = 1) # Rotate x-axis labels
+    ) +
+    grids(linetype = "dashed")
+}
+# Now call the function for each graph separately
+plot_pagerank_centrality(g1, "Factor1")
+plot_pagerank_centrality(g2, "Factor2")
+plot_pagerank_centrality(g3, "Factor3")
+
+dev.off()
+
+library(ggvenn)
+ggvenn(
+  list(Factor1=V(factor_graphs[["Factor1"]][["up"]])$name,
+       Factor2=V(factor_graphs[["Factor2"]][["up"]])$name,
+       Factor3=V(factor_graphs[["Factor3"]][["down"]])$name),
+  fill_color = c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF"),
+  stroke_size = 0.5, set_name_size = 4
+)
