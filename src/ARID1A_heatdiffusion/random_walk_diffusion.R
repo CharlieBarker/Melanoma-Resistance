@@ -286,6 +286,42 @@ g<-union2(union_factor_graphs[["Factor1"]],
 conv_nodes<-data.frame(uniprt=V(g)$name,
                        gene_name=V(g)$Gene_name)
 
+#print network for supplementary
+# Open PDF to save plots
+pdf(file = "paper/Supplementary_plots/combined_factor_network.pdf", width = 20, height = 20)
+# Identify nodes that belong to each factor individually and both
+factor1_nodes <- V(g)$name[V(g)$name %in% V(union_factor_graphs[["Factor1"]])$name]
+factor3_nodes <- V(g)$name[V(g)$name %in% V(union_factor_graphs[["Factor3"]])$name]
+both_nodes <- intersect(factor1_nodes, factor3_nodes)
+
+# Initialize all nodes as NA
+V(g)$factor <- NA
+
+# Assign "Both" to nodes in both Factor1 and Factor3
+V(g)$factor[V(g)$name %in% both_nodes] <- "Both"
+
+# Assign "Factor1" to nodes in Factor1 only
+V(g)$factor[V(g)$name %in% setdiff(factor1_nodes, both_nodes)] <- "Factor1"
+
+# Assign "Factor3" to nodes in Factor3 only
+V(g)$factor[V(g)$name %in% setdiff(factor3_nodes, both_nodes)] <- "Factor3"
+
+# Plot each factor network with gene names
+ggraph(g, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = 0.3), color = "grey") +
+  geom_node_point(aes(color = factor), size = 3) +
+  geom_node_text(aes(label = Gene_name), repel = TRUE, size = 3) +
+  labs(title = "Network Visualization of Union(Factor1, Factor3)",
+       subtitle = "Key genes and interactions associated with both ARID1A KO and drug response") +
+  cowplot::theme_cowplot()+
+  theme(
+    axis.text = element_blank(),  # Removes axis text
+    axis.title = element_blank(),  # Removes axis titles
+    axis.ticks = element_blank(),  # Removes axis ticks
+    axis.line = element_blank()
+  )
+dev.off()
+
 #######PCSF#######
 ###PCSF on the most central nodes (pagerank)
 
