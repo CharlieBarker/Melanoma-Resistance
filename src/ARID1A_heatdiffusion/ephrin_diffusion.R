@@ -341,8 +341,8 @@ ggplot(ephrin_heat[ephrin_heat$in_seed==F,], aes(x = -log10(p_values), y = dist,
 dev.off()
 
 pdf(file = "~/Desktop/Melanoma_Resistance/results/heatdiffusion/ephrin_heat.pdf",   # The directory you want to save the file in
-    width = 25,  # The width of the plot in inches
-    height = 20) # The height of the plot in inches
+    width = 14,  # The width of the plot in inches
+    height = 18) # The height of the plot in inches
 
 ggplot(wide_receptors_affected, aes(x = ARID1A_KO, y = WT)) +
   geom_point(colour="lightblue") +
@@ -375,11 +375,11 @@ complete_df %>%
   geom_boxplot() +
   geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
   scale_fill_manual(values = drug_colors) +
-  ggtitle("mRNA and protein abundances of selected members of MAPK pathway") +
+  ggtitle("mRNA and protein abundances of top 15 nodes after Ephrin diffusion") +
   xlab("Gene/Protein") +  # Change x-axis label to "Abundance"
   ylab("Abundance") +  # Change y-axis label to "Gene/Protein"
   cowplot::theme_cowplot() +
-  facet_wrap(data ~ X, scales="free") +
+  facet_wrap(X ~ data, scales="free") +
   grids(linetype = "dashed") +
   theme(
     plot.title = element_text(size = 20, face = "bold"),

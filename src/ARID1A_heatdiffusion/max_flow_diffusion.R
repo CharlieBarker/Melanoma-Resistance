@@ -392,7 +392,7 @@ pdf(file = paste0("./results/heatdiffusion/shortestpath_results.pdf"),
 ######FOR EGFR etc to JUN######
 
 # Plot shortest paths from specific receptors to transcription factors
-sources <- c("EGFR", "ROS1", "FGFR1")
+sources <- c("EGFR", "ROS1")
 sinks =  c("JUN")
 
 
