@@ -1,5 +1,5 @@
 
-#find correct environment 
+#find correct environment
 packLib="/usr/lib/R"
 if (file.exists(packLib)) {
   reticulate::use_condaenv("py37", required = T)
@@ -15,6 +15,8 @@ library(tidyr)
 library(tibble)  # Ensure tibble is loaded for rownames_to_column
 library(wesanderson)
 library(tidyverse)
+library(cowplot)
+library(ggpubr)
 
 # Define directory with the files
 tf_activity_dir <- '/Users/charliebarker/Desktop/Melanoma_Resistance/results/tf_activity/'
@@ -25,21 +27,21 @@ tf_files <- list.files(tf_activity_dir, pattern = '*_tf_acts.csv', full.names = 
 # Function to create volcano plot
 create_volcano_plot <- function(acts_file, pvals_file, output_dir) {
   file_name <- basename(acts_file)
-  
+
   # Remove the suffix "_tf_acts.csv" to get the experiment name
   experiment_name <- sub("_tf_acts.csv$", "", file_name)
-  
+
   # Read the data
   tf_acts <- read.csv(acts_file, row.names = 1)
   tf_pvals <- read.csv(pvals_file, row.names = 1)
   # Reset row names as a column for both data frames
   tf_acts <- tf_acts %>%
-    rownames_to_column(var = "TF") 
+    rownames_to_column(var = "TF")
   colnames(tf_acts)<-c("TF", "logFC")
   tf_pvals <- tf_pvals %>%
-    rownames_to_column(var = "TF") 
+    rownames_to_column(var = "TF")
   colnames(tf_pvals)<-c("TF", "padj")
-  
+
   # Merge the data
   df <- inner_join(tf_acts, tf_pvals, by = "TF")
 
@@ -55,7 +57,7 @@ vol_plot_list<-list()
 for (acts_file in tf_files) {
   # Construct the corresponding p-values file name
   pvals_file <- gsub("_tf_acts.csv", "_tf_pval.csv", acts_file)
-  
+
   # Check if the corresponding p-values file exists
   if (file.exists(pvals_file)) {
     # Create volcano plot
@@ -68,7 +70,7 @@ for (acts_file in tf_files) {
 df <- do.call("rbind", vol_plot_list)
 rownames(df)<-NULL
 
-jun_tfs<-df[grepl(df$exp, pattern = "Untreated_WT_vs_") | 
+jun_tfs<-df[grepl(df$exp, pattern = "Untreated_WT_vs_") |
               grepl(df$exp, pattern = "Untreated_ARID1A_KO_vs_"),]
 pal <- wes_palette("Zissou1", 100, type = "continuous")
 
@@ -92,41 +94,49 @@ jun_tfs <- jun_tfs %>%
 
 # Prepare the data for plotting
 plot_data <- jun_tfs %>%
-  dplyr::select(-exp)  %>% 
+  dplyr::select(-exp)  %>%
   pivot_wider(names_from = genetics, values_from = c(logFC, padj), names_sep = "_") %>%
   dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
 
-# Define the function
-generate_tf_activity_plot <- function(data, tf, output_file) {
+# Load necessary libraries
+library(ggplot2)
+library(cowplot)
+
+# Define the function to generate individual plots
+generate_tf_activity_plot <- function(data, tf) {
   # Filter the data for the specified TF
   tf_data <- data[data$TF == tf,]
-  
+
   # Create the ggplot
   tf_plot <- ggplot(tf_data, aes(x = drug_treatment, y = logFC, fill = genetics)) +
     geom_bar(stat = "identity", position = position_dodge(), width = 0.7) +
     geom_hline(yintercept = 0, linetype = "dashed") +
     theme_minimal() +
-    labs(title = paste("Log Fold Change of", tf, "Gene Under Different Conditions"),
+    labs(title = paste("Differential activity of ", tf, "Gene Under Different Conditions"),
          x = "Drug Treatment",
          y = "logFC",
          fill = "Genetics") +
-    theme_cowplot() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
-  # Save the plot as a PDF
-  pdf(file = output_file, width = 12, height = 6)
-  print(tf_plot)
-  dev.off()
+    cowplot::theme_cowplot() +
+    theme(
+      plot.title = element_text(size = 15, face = "bold"),
+      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+    ) +
+    grids(linetype = "dashed")
+
+  return(tf_plot)
 }
 
-# Example usage for MYC
-generate_tf_activity_plot(jun_tfs, "MYC", "~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_myc.pdf")
+# Generate individual plots for MYC and JUN
+myc_tf_plot <- generate_tf_activity_plot(jun_tfs, "MYC")
+jun_tf_plot <- generate_tf_activity_plot(jun_tfs, "JUN")
 
-# Example usage for JUN
-generate_tf_activity_plot(jun_tfs, "JUN", "~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_jun.pdf")
+# Combine the two plots vertically and save to a single PDF file
+combined_plot <- plot_grid(myc_tf_plot, jun_tf_plot, ncol = 1)
 
-# Example usage for AP1
-generate_tf_activity_plot(jun_tfs, "AP1", "~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_ap1.pdf")
+# Save the combined plot as a PDF
+output_file <- "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/tf_plot.pdf"
+ggsave(output_file, combined_plot, width = 8, height = 10)
 
 
 plot_data$label = ""
@@ -149,19 +159,19 @@ tf_plot<-ggplot(plot_data, aes(x = logFC_ARID1A, y = logFC_WT, label=label, colo
   geom_text_repel(colour="black")
 
 plot_residuals_tf <- plot_data[plot_data$padj_ARID1A < 0.1 | plot_data$padj_WT < 0.1,] %>%
-  dplyr::select(-logFC_ARID1A, -logFC_WT, -padj_ARID1A, -padj_WT, -label)  %>% 
+  dplyr::select(-logFC_ARID1A, -logFC_WT, -padj_ARID1A, -padj_WT, -label)  %>%
   pivot_wider(names_from = drug_treatment, values_from = residuals, names_sep = "_") %>%
   dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
 
 residual_plot_tf<-ggplot(plot_residuals_tf, aes(x = `Untreated vs Trametinib`, y = `Untreated vs Vemurafenib`, label=TF)) +
   geom_point() +  # Plot the points
-  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   labs(x = "ARID1A ~ WT Residuals for Trametinib", y = "ARID1A ~ WT Residuals for Vermurafenib", title = "TF activity Comparison Between ARID1A and WT") +
   theme_minimal() + # Use a minimal theme
   geom_text_repel(colour="black")
 
-#visualise the interesting transcription factors 
+#visualise the interesting transcription factors
 
 tfs_of_interest<-read.csv(file = "./results/collectri/tfs_of_interest.csv")
 
@@ -213,22 +223,22 @@ hla_df$control <- str_remove_all(hla_df$control, pattern = "_ARID1A_KO")
 hla_df$test <- str_remove_all(hla_df$test, pattern = "_WT")
 hla_df$test <- str_remove_all(hla_df$test, pattern = "_ARID1A_KO")
 
-ggplot(data = hla_df, aes(x = log2FoldChange, y = -log10(padj), col = diffexpressed, label = label)) + 
-  geom_vline(xintercept = c(-0.6, 0.6), col = "gray", linetype = 'dashed') + 
-  geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') + 
-  geom_point(size = 2) + 
-  scale_color_manual(values = c("#00AFBB", "grey", "#bb0c00"), # to set the colours of our variable 
-                     labels = c("Downregulated", "Not significant", "Upregulated")) + # to set the labels in case we want to overwrite the categories from the dataframe (UP, DOWN, NO) 
-  labs(color = 'Severe', #legend_title, 
-       x = expression("log"[2]*"FC"), y = expression("-log"[10]*"p-value")) + 
-  scale_x_continuous(breaks = seq(-10, 10, 2)) + # to customise the breaks in the x axis 
-  ggtitle('Expression of HLA proteins across different conditions') + # Plot title 
+ggplot(data = hla_df, aes(x = log2FoldChange, y = -log10(padj), col = diffexpressed, label = label)) +
+  geom_vline(xintercept = c(-0.6, 0.6), col = "gray", linetype = 'dashed') +
+  geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("#00AFBB", "grey", "#bb0c00"), # to set the colours of our variable
+                     labels = c("Downregulated", "Not significant", "Upregulated")) + # to set the labels in case we want to overwrite the categories from the dataframe (UP, DOWN, NO)
+  labs(color = 'Severe', #legend_title,
+       x = expression("log"[2]*"FC"), y = expression("-log"[10]*"p-value")) +
+  scale_x_continuous(breaks = seq(-10, 10, 2)) + # to customise the breaks in the x axis
+  ggtitle('Expression of HLA proteins across different conditions') + # Plot title
   geom_text_repel(max.overlaps = Inf) + # To show all labels
   facet_grid(genetic_ko~control+test)
 
 
 plot_expression <- combined_df %>%
-  dplyr::select(-baseMean, -lfcSE, -stat, -pvalue)  %>% 
+  dplyr::select(-baseMean, -lfcSE, -stat, -pvalue)  %>%
   pivot_wider(names_from = genetic_ko, values_from = c(log2FoldChange, padj), names_sep = "_") %>%
   dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
 # Create the linear model
@@ -238,7 +248,7 @@ plot_expression$residuals <- resid(model)
 
 # Join the data frames to add the transcription factor (tf) information
 plot_expression <- plot_expression %>%
-  left_join(tfs_of_interest, by = c("gene_symbol" = "target")) 
+  left_join(tfs_of_interest, by = c("gene_symbol" = "target"))
 plot_expression<-plot_expression[!is.na(plot_expression$source),]
 
 expression_plot<-ggplot(plot_expression, aes(x = log2FoldChange_ARID1A_KO, y = log2FoldChange_WT, label=gene_symbol, colour =weight)) +
@@ -251,14 +261,14 @@ expression_plot<-ggplot(plot_expression, aes(x = log2FoldChange_ARID1A_KO, y = l
 
 
 plot_residuals <- plot_expression[plot_expression$padj_ARID1A_KO < 0.1 | plot_expression$padj_WT < 0.1,] %>%
-  dplyr::select(-log2FoldChange_ARID1A_KO, -log2FoldChange_WT, -padj_ARID1A_KO, -padj_WT, -PMID, -weight)  %>% 
+  dplyr::select(-log2FoldChange_ARID1A_KO, -log2FoldChange_WT, -padj_ARID1A_KO, -padj_WT, -PMID, -weight)  %>%
   pivot_wider(names_from = drug, values_from = residuals, names_sep = "_") %>%
   dplyr::filter(complete.cases(.))  # Ensure that only rows with no missing values are included
 
 residual_plot<-ggplot(plot_residuals, aes(x = Trametinib_10nM, y = Vermurafenib_1uM, label=gene_symbol)) +
   geom_point() +  # Plot the points
-  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   facet_grid(~source) +  # Facet by drug treatment
   labs(x = "ARID1A ~ WT Residuals for Trametinib", y = "ARID1A ~ WT Residuals for Vermurafenib", title = "LogFC Comparison Between ARID1A and WT") +
   theme_minimal() + # Use a minimal theme
@@ -266,7 +276,7 @@ residual_plot<-ggplot(plot_residuals, aes(x = Trametinib_10nM, y = Vermurafenib_
 
 
 
-pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_deepdive.pdf"), 
+pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/plots/tf_activity_deepdive.pdf"),
     width = 12, height = 6)
 tf_plot
 expression_plot
