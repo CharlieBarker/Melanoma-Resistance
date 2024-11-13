@@ -139,6 +139,23 @@ output_file <- "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/tf_plot.
 ggsave(output_file, combined_plot, width = 8, height = 10)
 
 
+# Generate individual plots for RFX5, RFXAP, RFXANK
+RFX5_tf_plot <- generate_tf_activity_plot(jun_tfs, "RFX5")
+RFXAP_tf_plot <- generate_tf_activity_plot(jun_tfs, "RFXAP")
+RFXANK_tf_plot <- generate_tf_activity_plot(jun_tfs, "RFXANK")
+
+
+# Combine the two plots vertically and save to a single PDF file
+combined_plot_mhc <- plot_grid(RFX5_tf_plot,
+                           RFXAP_tf_plot,
+                           RFXANK_tf_plot,
+                           ncol = 1)
+
+# Save the combined plot as a PDF
+output_file <- "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/tf_plot_mhc.pdf"
+ggsave(output_file, combined_plot_mhc, width = 12, height = 15)
+
+
 plot_data$label = ""
 both_sig<-plot_data$padj_ARID1A < 0.001 | plot_data$padj_WT < 0.001
 plot_data$label[both_sig]<- plot_data$TF[both_sig]
