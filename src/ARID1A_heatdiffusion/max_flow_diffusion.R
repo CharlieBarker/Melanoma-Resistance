@@ -311,14 +311,19 @@ plot_flow <- function(sources, sinks, short_path_graph) {
   flow_df <- data.frame(name = V(short_path_graph)$Gene_name, flow = V(short_path_graph)$flow)
   title <- create_flow_title(sources, sinks)
 
-  p2 <- ggplot(data = flow_df, aes(x = reorder(name, -flow), y = flow)) +  # Reorder by flow descending
+  p2 <- ggplot(data = flow_df, aes(x = flow, y = reorder(name, flow))) +  # Reorder by flow descending
     geom_bar(stat = "identity", fill = "steelblue", color = "black") +   # Custom color for the bars
     labs(title = title,
-         x = "Gene Name",
-         y = "Flow") +    # Add labels
-    geom_text(aes(label = round(flow, 2)), vjust = -0.5, size = 3.5)  +
-    cowplot::theme_cowplot()  +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))          # Rotate x-axis labels
+         y = "Gene Name",
+         x = "Flow") +    # Add labels
+    geom_text(aes(label = round(flow, 2)), hjust = 0.5, size = 3.5) +
+    cowplot::theme_cowplot() +
+    theme(
+      plot.title = element_text(size = 15, face = "bold"),
+      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels
+    ) +
+    grids(linetype = "dashed")
   return(p2)
 }
 
@@ -342,7 +347,7 @@ create_combined_plots <- function(sources, sinks, g, conv_nodes, factor_genes_na
   p2 <- plot_flow(sources, sinks, short_path_graph)
 
   # Combine the two plots, each taking half of the height
-  combined_plot <- p1 / p2 + plot_layout(heights = c(2, 1))
+  combined_plot <-p2
 
   return(combined_plot)
 }
@@ -387,7 +392,7 @@ library(ggplot2)
 library(patchwork)
 
 pdf(file = paste0("./results/heatdiffusion/shortestpath_results.pdf"),
-    width = 15, height = 20)
+    width = 10, height = 12)
 
 ######FOR EGFR etc to JUN######
 
