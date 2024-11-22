@@ -100,8 +100,8 @@ complete_df<-rbind(data.frame(proteins_df, data="Protein abundace"),
 
 # Step 1: Call the pdf command to start the plot
 pdf(file = "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/gerosa_negative_feedback.pdf",   # The directory you want to save the file in
-    width = 14,  # The width of the plot in inches
-    height = 18) # The height of the plot in inches
+    width = 10,  # The width of the plot in inches
+    height = 10) # The height of the plot in inches
 
 complete_df %>%
   ggplot(aes(x = value, y = X, fill = drug)) +
@@ -115,7 +115,7 @@ complete_df %>%
   facet_wrap(data ~ ko, scales = "free") +
   grids(linetype = "dashed") +
   theme(
-    plot.title = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 14, face = "bold"),
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)  # Use linewidth instead of size
   )
 

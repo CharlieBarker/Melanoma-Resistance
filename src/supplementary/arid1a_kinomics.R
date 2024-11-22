@@ -144,7 +144,7 @@ create_plot <- function(data, kinase_type) {
         (!!x_col > 1 | !!x_col < -1 | !!y_col > 1 | !!y_col < -1),
         `Kinase Name`,
         NA)),  # Labels are shown only for selected points
-      size = 3,  # Adjust text size as needed
+      size = 4,  # Adjust text size as needed
       box.padding = 0.35,  # Padding around the text label to avoid overlap
       point.padding = 0.5,  # Space between the label and the point
       max.overlaps = Inf,  # Avoid limit on label overlaps
@@ -157,10 +157,21 @@ create_plot <- function(data, kinase_type) {
 # Create plots for PTK and STK
 ptk_plot <- create_plot(experiment_matrix, "PTK")
 stk_plot <- create_plot(experiment_matrix, "STK")
+
+
+
+to_supp<-complete_results
+to_supp$file<-NULL
+
+output_dir <- "./paper/Supplementary_tables"
+write.csv(to_supp, file = paste0(output_dir, "/Supplementary_Table_S5.csv"), row.names = FALSE)
+
+
+
 # Step 1: Call the pdf command to start the plot
 pdf(file = "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/kinomics_arid1a.pdf",   # The directory you want to save the file in
-    width = 10,  # The width of the plot in inches
-    height = 6) # The height of the plot in inches
+    width = 12,  # The width of the plot in inches
+    height = 8) # The height of the plot in inches
 
 # Display the plots
 plot_grid(ptk_plot, stk_plot)
@@ -197,7 +208,7 @@ ggplot(df_ranked, aes(y = Rank, x = `Median Kinase Statistic`)) +
   labs(title = "Median kinase statistic vs rank showing variance",
        y = "Rank",
        x = "Median Kinase Statistic") +
-  facet_wrap(~ experiment, ncol = 1) +
+  facet_wrap(~ experiment, ncol = 2) +
   cowplot::theme_cowplot() +
   theme(
     plot.title = element_text(size = 15, face = "bold"),

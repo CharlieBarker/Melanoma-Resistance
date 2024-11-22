@@ -42,8 +42,7 @@ data_overview_plot<-plot_data_overview(MOFAobject.trained)
 pdf(file = "results/mofa/visualisation/mofa_variance.pdf",width=6,height=10)
 data_overview_plot
 ggpubr::ggarrange(variance_heat, variance_per_view, nrow = 2,align = "hv") #density plots per batch
-dev.off()
-pdf(file = "results/mofa/visualisation/mofa_factors.pdf",width=5,height=2)
+dev.off()pdf(file = "results/mofa/visualisation/mofa_factors.pdf",width=5,height=2)
 facotrs_plot
 dev.off()
 pdf(file = "results/mofa/visualisation/mofa_factors_info.pdf",width=4,height=4)

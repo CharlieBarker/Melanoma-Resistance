@@ -92,14 +92,14 @@ sample_colour_scheme<-c("#001219","055363", "#005F73", "#0A9396", "#94D2BD",
 fontSize = 10
 
 #WRITE PDFS
-pdf(file = "./paper/Supplementary_plots/COV_plots.pdf",width=8.27,height=8)
+pdf(file = "./paper/Supplementary_plots/COV_plots.pdf",width=14,height=4)
 
 ggplot(cov_big_df, aes(y=CV, x=Sample, fill=Sample))+
   geom_violin()+cowplot::theme_cowplot(font_size = fontSize) +
   ylim(0, 100) +
   labs(y = "CV (%)", x = "Samples") +
   theme(axis.text.x = element_blank())+
-  scale_fill_manual(values=sample_colour_scheme) + facet_wrap(~mode, nrow = 3) +
+  scale_fill_manual(values=sample_colour_scheme) + facet_wrap(~mode, nrow = 1) +
   grids(linetype = "dashed") +
   theme(plot.title = element_text(size = 8, face = "bold"),
         panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)) # Use linewidth instead of size

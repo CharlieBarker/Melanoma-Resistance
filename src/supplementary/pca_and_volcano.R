@@ -92,8 +92,8 @@ pca_list<-lapply(seq(length(names(list_of_inputs))),
 
 mds_big_df <- do.call("rbind", pca_list)
 pdf(# The directory you want to save the file in
-  width = 12, # The width of the plot in inches
-  height = 12,
+  width = 14, # The width of the plot in inches
+  height = 6,
   file = "./paper/Supplementary_plots/raw_data.pdf")
 
 ggplot(mds_big_df, aes(x=x, y=y, color=Drug.treatment, shape=Gene.knockout)) +
@@ -101,7 +101,7 @@ ggplot(mds_big_df, aes(x=x, y=y, color=Drug.treatment, shape=Gene.knockout)) +
   cowplot::theme_cowplot() +
   scale_colour_manual(values=drug_colours) +
   grids(linetype = "dashed") +
-  facet_grid(title ~ type) +
+  facet_grid(type ~ title) +
   theme(plot.title = element_text(size = 8, face = "bold"),
         panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)) # Use linewidth instead of size
 
@@ -315,8 +315,8 @@ plot_volcano <- function(to_plot, title,
 
 
 pdf(
-  width = 8.3,  # Width of the plot in inches
-  height = 11.7, # Height of the plot in inches
+  width = 11.7,  # Width of the plot in inches
+  height = 7, # Height of the plot in inches
   file = "./paper/Supplementary_plots/volcano_plots_by_data_type.pdf"
 )
 
@@ -327,18 +327,18 @@ arid1a_curve_params <- list("a" = 1, "b" = 0.1)
 # Page 1: mRNA RNAseq/transcriptomics plots
 ggpubr::ggarrange(
   plot_volcano(lfc_trametinib[lfc_trametinib$column_label == "mRNA RNAseq/transcriptomics",],
-               title = "Expressed genes, Untreated WT vs Trametinib-treated WT",
+               title = "Expressed genes, Trametinib-treated WT vs Untreated WT",
                labelling_parameters = drug_labelling_params),
   plot_volcano(lfc_vemurafenib[lfc_vemurafenib$column_label == "mRNA RNAseq/transcriptomics",],
-               title = "Expressed genes, Untreated WT vs Vemurafenib-treated WT",
+               title = "Expressed genes, Vemurafenib-treated WT vs Untreated WT",
                labelling_parameters = drug_labelling_params),
   plot_volcano(lfc_combination[lfc_combination$column_label == "mRNA RNAseq/transcriptomics",],
-               title = "Expressed genes, Untreated WT vs Combination-treated WT",
+               title = "Expressed genes, Combination-treated WT vs Untreated WT",
                labelling_parameters = drug_labelling_params),
   plot_volcano(lfc_arid1a[lfc_arid1a$column_label == "mRNA RNAseq/transcriptomics",],
-               title = "Expressed genes, Untreated WT vs Untreated-ARID1A KO",
+               title = "Expressed genes, Untreated-ARID1A KO vs Untreated WT",
                significant_parameters = arid1a_curve_params, labelling_parameters = arid1a_curve_params),
-  nrow = 4
+  nrow = 2, ncol = 2
 )
 
 # Page 2: Protein abundance plots
@@ -355,7 +355,7 @@ ggpubr::ggarrange(
   plot_volcano(lfc_arid1a[lfc_arid1a$column_label == "Protein abundance",],
                title = "Abundant proteins, Untreated WT vs Untreated-ARID1A KO",
                significant_parameters = arid1a_curve_params, labelling_parameters = arid1a_curve_params),
-  nrow = 4
+  nrow = 2, ncol = 2
 )
 
 # Page 3: Phosphoproteomic abundance plots
@@ -372,7 +372,7 @@ ggpubr::ggarrange(
   plot_volcano(lfc_arid1a[lfc_arid1a$column_label == "Phosphoproteomic abundance",],
                title = "Abundant phosphopeptides, Untreated WT vs Untreated-ARID1A KO",
                significant_parameters = arid1a_curve_params, labelling_parameters = arid1a_curve_params),
-  nrow = 4
+  nrow = 2, ncol = 2
 )
 
 # Close the PDF device
@@ -409,13 +409,13 @@ molten_phospho_processed <- molten_phospho_processed %>%
 corr_plot_df<-merge(x = molten_mRNA, y = molten_protein,
                     by = c("GENE", "CONDITION"))
 pdf(# The directory you want to save the file in
-  width = 10, # The width of the plot in inches
-  height = 11.7,
+  width = 12, # The width of the plot in inches
+  height = 4,
   file = "./paper/Supplementary_plots/correlation_plots.pdf")
 ggplot(corr_plot_df, aes(x = `Mean Voom-normalised mRNA abundance`,
                          y = `Mean Protein Abundance`)) +
   geom_point(alpha=0.1) +
-  geom_density_2d(bins=20) + facet_wrap(~CONDITION, ncol = 2) + cowplot::theme_cowplot() + stat_cor(method = "pearson", label.x = 3, label.y = 20)  +
+  geom_density_2d(bins=20) + facet_wrap(~CONDITION, ncol = 4) + cowplot::theme_cowplot() + stat_cor(method = "pearson", label.x = 0, label.y = 23)  +
   grids(linetype = "dashed") +
   theme(plot.title = element_text(size = 8, face = "bold"),
         panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)) # Use linewidth instead of size

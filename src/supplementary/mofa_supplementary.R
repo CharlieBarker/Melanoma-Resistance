@@ -48,3 +48,13 @@ ggplot(variance_explained_long, aes(x = Factor, y = Variance, fill = Type)) +
             vjust = -0.5, size = 3.5)  # Add text labels above bars
 
 dev.off()
+
+
+
+weights <- get_weights(MOFAobject.trained,
+                       views = "all",
+                       as.data.frame = TRUE
+)
+
+output_dir <- "./paper/Supplementary_tables"
+write.csv(weights, file = paste0(output_dir, "/Supplementary_Table_S4.csv"), row.names = FALSE)
