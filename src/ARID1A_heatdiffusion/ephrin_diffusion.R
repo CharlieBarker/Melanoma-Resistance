@@ -370,23 +370,6 @@ ggplot(wide_receptors_affected, aes(x = ARID1A_KO, y = WT)) +
     min.segment.length = 0  # Draw segment lines for all labels
   )
 
-complete_df %>%
-  ggplot(aes(y = value, x = ko, fill = drug)) +
-  geom_boxplot() +
-  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
-  scale_fill_manual(values = drug_colors) +
-  ggtitle("mRNA and protein abundances of top 15 nodes after Ephrin diffusion") +
-  xlab("Gene/Protein") +  # Change x-axis label to "Abundance"
-  ylab("Abundance") +  # Change y-axis label to "Gene/Protein"
-  cowplot::theme_cowplot() +
-  facet_wrap(X ~ data, scales="free") +
-  grids(linetype = "dashed") +
-  theme(
-    plot.title = element_text(size = 20, face = "bold"),
-    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)  # Use linewidth instead of size
-  )
-
-
 # Step 1: Find the vertex corresponding to "NCK1"
 nck1_vertex <- V(g)[V(g)$Gene_name == "FYN"]
 
@@ -418,6 +401,38 @@ ggraph(nck1_subgraph, layout = "fr") +  # Using Fruchterman-Reingold layout
 
 dev.off()
 
+
+pdf(file = "~/Desktop/Melanoma_Resistance/results/heatdiffusion/ephrin_interesting_proteins.pdf",   # The directory you want to save the file in
+    width = 24,  # The width of the plot in inches
+    height = 6) # The height of the plot in inches
+
+
+p<-complete_df %>%
+  ggplot(aes(y = value, x = ko, fill = drug)) +
+  geom_boxplot() +
+  geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
+  scale_fill_manual(values = drug_colors) +
+  ggtitle("mRNA and protein abundances of top 15 nodes after Ephrin diffusion") +
+  xlab("Gene/Protein") +  # Change x-axis label to "Abundance"
+  ylab("Abundance") +  # Change y-axis label to "Gene/Protein"
+  cowplot::theme_cowplot() +
+  facet_wrap(X ~ data, scales="free", ncol = 12) +
+  grids(linetype = "dashed") +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)  # Use linewidth instead of size
+  )+
+  stat_summary(
+    fun = median,
+    geom = "point",
+    aes(group = interaction(drug, ko)),
+    position = position_dodge(width = .9)
+  )
+
+# Add lines to the plot
+p
+
+dev.off()
 
 
 

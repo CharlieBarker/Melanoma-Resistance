@@ -94,6 +94,12 @@ nodes_to_see <- c(
   PTK2 = "Other Kinases",
   CDK2 = "Other Kinases",
 
+  #PKCs
+  PRKCA = "PKCs",
+  PRKCB = "PKCs",
+  PRKCD = "PKCs",
+  PRKCZ = "PKCs",
+
   # RTKs
   EGFR = "RTKs",
   FGFR1 = "RTKs",
@@ -162,6 +168,12 @@ nodes_to_see_proteins <- c(
   PTK2 = "Other kinase",
   CDK2 = "Other kinase",
   FYN = "Other kinase",
+
+  #PKCs
+  PRKCA = "PKCs",
+  PRKCB = "PKCs",
+  PRKCD = "PKCs",
+  PRKCZ = "PKCs",
 
   # Ephrins
   EPHA2 = "Ephrin receptors",
