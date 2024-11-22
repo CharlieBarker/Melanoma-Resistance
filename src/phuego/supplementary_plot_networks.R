@@ -60,7 +60,7 @@ results_dir <- "./results/phuego/results/"
 factor_graphs <- list()
 factor_genes_names <- list()
 
-factor_to_vis<-"Factor2"
+factor_to_vis<-"Factor1"
 
 # Process each factor
 for (factor in factorS) {
@@ -176,14 +176,21 @@ factor_centrality$names <- genename_df$GENENAME[match(factor_centrality$ind, gen
 factor_centrality$names[factor_centrality$rank > 30] <- ""
 
 centrality_plots<-ggplot(factor_centrality, aes(x = rank, y = values, label = names)) +
-  geom_point() +
-  cowplot::theme_cowplot() +
+  geom_point(color = "darkred") +
   geom_text_repel(colour = "black", force = 15) +
   scale_colour_gradientn(colours = pal) +
   labs(x = "Rank in network", y = "Centrality (PageRank)",
-       title = "Centrality of Network describing combination-specific changes") +  # Adding axis titles
-  theme(legend.position = "bottom", plot.title = element_text(size=10))  # Placing legend at the bottom
+       title = "Centrality of Network describing combined drug-agnostic changes") +
+  cowplot::theme_cowplot() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)
+  ) +
+  grids(linetype = "dashed")
 
+pdf(file = "./paper/Figures/drug_agnostic_centrality.pdf", width = 6)
+centrality_plots
+dev.off()
 
 
 
@@ -257,7 +264,7 @@ pdf(file = "paper/Supplementary_plots/big_networks.pdf", width = 10, height = 10
 ggraph(g1, layout = "fr") +
   geom_edge_link(aes(edge_alpha = 0.3), color = "grey") +
   geom_node_point(aes(color = consensus_direction), size = 3) +
-  geom_node_text(aes(label = Gene_name), repel = TRUE, size = 3) +
+  geom_node_text(aes(label = Gene_name), repel = TRUE, size = 5) +
   labs(title = "Network Visualization of Factor1",
        subtitle = "Key genes and interactions associated with Factor1") +
   cowplot::theme_cowplot()+
@@ -272,7 +279,7 @@ ggraph(g1, layout = "fr") +
 ggraph(g2, layout = "fr") +
   geom_edge_link(aes(edge_alpha = 0.3), color = "grey") +
   geom_node_point(aes(color = consensus_direction), size = 3) +
-  geom_node_text(aes(label = Gene_name), repel = TRUE, size = 3) +
+  geom_node_text(aes(label = Gene_name), repel = TRUE, size = 4) +
   labs(title = "Network Visualization of Factor2",
        subtitle = "Key genes and interactions associated with Factor2") +
   cowplot::theme_cowplot()+
@@ -287,7 +294,7 @@ ggraph(g2, layout = "fr") +
 ggraph(g3, layout = "fr") +
   geom_edge_link(aes(edge_alpha = 0.3), color = "grey") +
   geom_node_point(size = 3, aes(color = consensus_direction)) +
-  geom_node_text(aes(label = Gene_name), repel = TRUE, size = 3) +
+  geom_node_text(aes(label = Gene_name), repel = TRUE, size = 5) +
   labs(title = "Network Visualization of Factor3",
        subtitle = "Key genes and interactions associated with Factor3") +
   cowplot::theme_cowplot()+
