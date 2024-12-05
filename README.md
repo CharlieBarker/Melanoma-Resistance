@@ -4,7 +4,7 @@ In this repository is the code to explore **ARID1A-driven resistance mechanisms*
 
 ## Overview
 
-This project examines the signaling and immune dynamics underlying drug resistance in melanoma, particularly in the context of ARID1A loss. Using **graph-theoretical and matrix factorization approaches**, the study uncovers actionable targets and resistance pathways.
+This project examines the signaling and immune dynamics underlying drug resistance in melanoma in the context of ARID1A loss. Using **graph-theoretical and matrix factorization approaches**, the study uncovers actionable resistance pathways.
 
 ### Key Findings:
 - **ARID1A-KO cells** sustain MAPK1/3 and JNK signaling post-treatment, bypassing feedback mechanisms.
