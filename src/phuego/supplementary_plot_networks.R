@@ -310,7 +310,7 @@ ggraph(g3, layout = "fr") +
 dev.off()
 
 
-pdf(file = "paper/Supplementary_plots/big_networks_centrality.pdf", width = 6, height = 6)
+pdf(file = "paper/Supplementary_plots/big_networks_centrality.pdf", width = 6, height = 5)
 
 # Load required libraries
 library(igraph)
@@ -370,3 +370,42 @@ ggvenn(
   fill_color = c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF"),
   stroke_size = 0.5, set_name_size = 4
 )
+
+
+
+
+# Assigning factors to graphs
+factors <- list(
+  Factor1 = g1,
+  Factor2 = g2,
+  Factor3 = g3
+)
+
+# Function to write graph as CSV
+write_graph_to_csv <- function(graph, factor_name, file_path) {
+  edges <- as_data_frame(graph, what = "edges")
+  nodes <- as_data_frame(graph, what = "vertices")
+
+  # Write edges and nodes to CSV
+  edges_file <- paste0(file_path, "_edges.csv")
+  nodes_file <- paste0(file_path, "_nodes.csv")
+
+  write.csv(edges, edges_file, row.names = FALSE)
+  write.csv(nodes, nodes_file, row.names = FALSE)
+}
+
+# Directory for output files
+output_dir <- "./paper/Supplementary_graphs"
+dir.create(output_dir, showWarnings = FALSE)
+
+# Write each factor to CSV
+for (factor_name in names(factors)) {
+  file_path <- file.path(output_dir, factor_name)
+  write_graph_to_csv(factors[[factor_name]], factor_name, file_path)
+}
+
+# Zip the files
+zip_file <- "./paper/factor_networks.zip"
+zip(zip_file, files = list.files(output_dir, full.names = TRUE))
+
+cat("Network files written and zipped as", zip_file)

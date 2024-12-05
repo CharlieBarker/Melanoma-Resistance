@@ -181,7 +181,7 @@ dev.off()
 
 pdf(file = "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/kinomics_variance.pdf",   # The directory you want to save the file in
     width = 8,  # The width of the plot in inches
-    height = 10) # The height of the plot in inches
+    height = 8) # The height of the plot in inches
 
 # Rank by Median Kinase Statistic within each experiment and create a new column for rank
 df_ranked <- complete_results[!grepl(complete_results$experiment, pattern = "ARID1A"),] %>%
@@ -221,7 +221,7 @@ ggplot(df_ranked, aes(y = Rank, x = `Median Kinase Statistic`)) +
   geom_vline(xintercept = c(-1.5, 1.5), linetype = "dotted", color = "red", size = 1) +
 
   # Add label for variance for each experiment
-  geom_text(data = df_variance, aes(x = 1.5, y = 100, label = paste("Variance: ", round(variance, 2))),
-            color = "black", size = 4, fontface = "bold", inherit.aes = FALSE)
+  geom_text(data = df_variance, aes(x = -1.5, y = 50, label = paste("Variance: ", round(variance, 2))),
+            color = "black", size = 6, fontface = "bold", inherit.aes = FALSE)
 
 dev.off()

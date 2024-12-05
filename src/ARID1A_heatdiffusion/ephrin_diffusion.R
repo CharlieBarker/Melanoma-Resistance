@@ -405,9 +405,8 @@ dev.off()
 pdf(file = "~/Desktop/Melanoma_Resistance/results/heatdiffusion/ephrin_interesting_proteins.pdf",   # The directory you want to save the file in
     width = 24,  # The width of the plot in inches
     height = 6) # The height of the plot in inches
-
-
-p<-complete_df %>%
+complete_df$data<-str_replace_all(complete_df$data, pattern = " abundace", replacement = "")
+p <- complete_df %>%
   ggplot(aes(y = value, x = ko, fill = drug)) +
   geom_boxplot() +
   geom_jitter(color = "black", size = 0.4, alpha = 0.9) +
@@ -416,12 +415,13 @@ p<-complete_df %>%
   xlab("Gene/Protein") +  # Change x-axis label to "Abundance"
   ylab("Abundance") +  # Change y-axis label to "Gene/Protein"
   cowplot::theme_cowplot() +
-  facet_wrap(X ~ data, scales="free", ncol = 12) +
+  facet_wrap(X ~ data, scales = "free", ncol = 12) +
   grids(linetype = "dashed") +
   theme(
     plot.title = element_text(size = 20, face = "bold"),
-    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)  # Use linewidth instead of size
-  )+
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),  # Use linewidth instead of size
+    strip.text.x = element_text(size = 16, face = "bold")  # Make facet labels for X larger
+  ) +
   stat_summary(
     fun = median,
     geom = "point",
