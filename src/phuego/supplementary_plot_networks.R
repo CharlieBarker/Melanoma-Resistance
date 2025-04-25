@@ -16,7 +16,6 @@ library(ghibli)
 library(EnsDb.Hsapiens.v86)
 library(tidyr)
 library(MOFA2)
-library(ggConvexHull)
 
 
 knitr::opts_chunk$set(dev = "ragg_png")
@@ -56,7 +55,7 @@ complete_results$`Kinase Name` <- reorder(complete_results$`Kinase Name`, comple
 # Get phuego graphs
 KDE <- "0.5"
 factorS <- c("Factor1", "Factor2", "Factor3")
-results_dir <- "./results/phuego/results/"
+results_dir <- "./results/phuego/"
 factor_graphs <- list()
 factor_genes_names <- list()
 
@@ -64,8 +63,8 @@ factor_to_vis<-"Factor1"
 
 # Process each factor
 for (factor in factorS) {
-  file_graphml_up <- file.path(results_dir, factor, "increased", paste0("KDE_", KDE), "networks", "KDE.graphml")
-  file_graphml_down <- file.path(results_dir, factor, "decreased", paste0("KDE_", KDE), "networks", "KDE.graphml")
+  file_graphml_up <- file.path(results_dir, paste0("KDE_", KDE), factor, "KDE_increased.graphml")
+  file_graphml_down <- file.path(results_dir, paste0("KDE_", KDE), factor, "KDE_decreased.graphml")
 
   factor_graphs[[factor]][["up"]] <- read_graph(file = file_graphml_up, format = "graphml")
   factor_graphs[[factor]][["down"]] <- read_graph(file = file_graphml_down, format = "graphml")

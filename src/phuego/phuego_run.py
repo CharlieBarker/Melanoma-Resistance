@@ -2,11 +2,11 @@ import os
 from phuego import phuego
 
 # User input: paths.
-support_data_folder = "/Users/charliebarker/Desktop/phuego_support"
-res_folder = "/Users/charliebarker/Desktop/Melanoma_Resistance/results/phuego"
+support_data_folder = "/home/charlie/Desktop/support_data_slim"
+res_folder = "/home/charlie/Desktop/Melanoma_Resistance/results/phuego"
 
 # Define the test directory.
-test_dir = "/Users/charliebarker/Desktop/Melanoma_Resistance/results/mofa/mofa_factors"
+test_dir = "/home/charlie/Desktop/Melanoma_Resistance/results/mofa/mofa_factors"
 
 # When calling the functions, set your parameters here.
 fisher_geneset = ["B"]
@@ -17,7 +17,7 @@ ini_neg = ["False"]
 damping = .95
 rwr_threshold = 0.01
 kde_cutoff = [0.5]
-use_existing_rwr = True
+use_existing_rwr = False
 convert2folder = True
 include_isolated_egos_in_KDE_net = False
 net_format = "graphml"

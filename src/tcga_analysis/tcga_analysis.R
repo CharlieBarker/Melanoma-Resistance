@@ -74,7 +74,7 @@ perform_tf_analysis <- function(counts, net, samples_arid1a_affected) {
 # Main script execution
 counts <- fetch_and_prepare_data()
 samples_arid1a_affected <- get_arid1a_mutation_status(c("ARID1A"))
-net <- decoupleR::get_collectri(organism = 'human', split_complexes = FALSE)
+net <- get_collectri(organism = 'human', split_complexes = FALSE)
 sample_acts <- perform_tf_analysis(counts, net, samples_arid1a_affected$samples)
 
 #first venn diagram of patients
