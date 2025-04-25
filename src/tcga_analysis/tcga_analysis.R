@@ -10,6 +10,7 @@ library(limma)
 library(reshape2)
 library(ggrepel)
 library(wesanderson)
+library(tibble)
 
 # Set working directory
 home_dir <- "~/Desktop/Melanoma_Resistance/"
@@ -26,6 +27,16 @@ fetch_and_prepare_data <- function(extract_new=F) {
       select(-entrezGeneId, -type) %>%
       # Set 'hugoGeneSymbol' as row names
       column_to_rownames(var = "hugoGeneSymbol")
+    
+    # Define the file path
+    file_path <- "./data/tcga_analysis/skcm_tcga_all_mrna_seq_fpkm.csv"
+    
+    # Create directories if they don't exist
+    dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
+    
+    # Write the dataframe `df` to the CSV file
+    write.csv(counts, file = file_path, row.names = FALSE)
+    
     return(counts)
   }else{
     skcm_tcga <- get_case_lists("skcm_tcga")
@@ -63,7 +74,7 @@ perform_tf_analysis <- function(counts, net, samples_arid1a_affected) {
 # Main script execution
 counts <- fetch_and_prepare_data()
 samples_arid1a_affected <- get_arid1a_mutation_status(c("ARID1A"))
-net <- get_collectri(organism = 'human', split_complexes = FALSE)
+net <- decoupleR::get_collectri(organism = 'human', split_complexes = FALSE)
 sample_acts <- perform_tf_analysis(counts, net, samples_arid1a_affected$samples)
 
 #first venn diagram of patients
