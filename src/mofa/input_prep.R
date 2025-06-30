@@ -9,7 +9,7 @@ library(purrr)
 library(data.table)
 library(dplyr)
 
-gene_names
+#gene_names
 rename_rows<-function(to_plot, edb){
   uniprot_accession<-unlist(map(str_split(sub(" .*", "", rownames(to_plot)), "__"), 2))
   frag_sequence<-unlist(map(str_split(sub(" .*", "", rownames(to_plot)), "__"), 1))

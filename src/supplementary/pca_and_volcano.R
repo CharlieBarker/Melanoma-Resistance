@@ -18,7 +18,7 @@ library(EnsDb.Hsapiens.v86)
 
 list_of_inputs<-list(`mRNA RNAseq/transcriptomics`=data.frame(read.csv("./data/input_data/rna_expression.csv")),
                      `Protein abundance`=data.frame(read.csv("./data/input_data/proteins.csv")),
-                     `Phosphoproteomic abundance`=data.frame(read.csv("./data/input_data/phosphosites.csv"))
+                     `Phosphoproteomic abundance`=data.frame(read.csv("./data/input_data/unfiltered_phosphosites.csv"))
 )
 
 #replace UNIPROT for genenames within protein abundances
@@ -137,9 +137,9 @@ produce_lfc <- function(counts, contrast_matrix, replacement_Vec) {
 
 
 
-fit_levels<-c("groupCombinations.ARID1A_KO", "groupTrametinib.ARID1A_KO",   "groupUntreated.ARID1A_KO",
-              "groupVemurafenib.ARID1A_KO",  "groupCombinations.WT",        "groupTrametinib.WT",
-              "groupUntreated.WT",          "groupVemurafenib.WT")
+fit_levels<-c("groupCombinations.ARID1A_KO", "groupTrametinib.ARID1A_KO",   "groupUntreated.ARID1A_KO", "groupVemurafenib.ARID1A_KO",  
+              "groupCombinations.MED12_KO", "groupTrametinib.MED12_KO",   "groupUntreated.MED12_KO", "groupVemurafenib.MED12_KO", 
+              "groupCombinations.WT",        "groupTrametinib.WT", "groupUntreated.WT",          "groupVemurafenib.WT")
 contr_arid1a <- makeContrasts(groupUntreated.ARID1A_KO - groupUntreated.WT, levels = fit_levels)
 contr_combination <- makeContrasts(groupCombinations.WT - groupUntreated.WT, levels = fit_levels)
 contr_trametinib <- makeContrasts(groupTrametinib.WT - groupUntreated.WT, levels = fit_levels)

@@ -22,7 +22,10 @@ rename_rows<-function(to_plot, edb){
   uniprot_accession<-unlist(map(str_split(sub(" .*", "", rownames(to_plot)), "__"), 2))
   frag_sequence<-unlist(map(str_split(sub(" .*", "", rownames(to_plot)), "__"), 1))
   residue_in_frag<-parse_number(unlist(map(str_split(rownames(to_plot), "__"), last)))
-  frag_sequence_first_residue<-parse_number(unlist(map(str_split(str_extract_all(rownames(to_plot), "\\[[^()]+\\]"), "-"), first)))  
+  frag_sequence_first_residue<-parse_number(unlist(map_chr(
+    str_extract(rownames(to_plot), "\\[[^()]+\\]"),   # Step 1: extract [...] from each row name
+    ~ str_split(.x, "-", simplify = TRUE)[1]          # Step 2+3: split and take first
+  )))  
   residue<-gsub('[[:digit:]]+', '', unlist(map(str_split(rownames(to_plot), "__"), last)))
   site<-frag_sequence_first_residue+residue_in_frag-1
   full_genename_df<-AnnotationDbi::select(edb, keys = uniprot_accession, keytype = "UNIPROTID", columns = "GENENAME")
@@ -113,7 +116,7 @@ transform_peptide <- function(sequence) {
 
 # Apply the transformation to all peptides
 transformed_peptides <- sapply(SiteSequence, transform_peptide)
-transformed_peptides_df<-stack(transformed_peptides)
+  transformed_peptides_df<-stack(transformed_peptides)
 # write_delim(x = transformed_peptides_df,
 #             file = "~/Desktop/Melanoma_Resistance/data/proteomic/psite_dict.csv",
 #             col_names = F, 
@@ -143,6 +146,7 @@ colnames(to_study)<-str_remove(colnames(to_study), pattern = "\\..+")
 #subset for relevant genetic background. 
 to_study<-to_study#[grep(colnames(to_study), pattern = "__WT")]
 colnames(to_study)<-str_remove(colnames(to_study), pattern = "\\..+")
+write.csv(to_study, file = "./data/input_data/unfiltered_phosphosites.csv")
 
 # filter for up-regulated phosphosites
 phosphoL6.mean <- meanAbundance(to_study, grps = colnames(to_study))
