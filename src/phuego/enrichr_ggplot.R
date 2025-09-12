@@ -23,7 +23,7 @@ enrichr_bioplanet2019$label<-""
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$log_pval>log_pval_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$log_pval>log_pval_cutoff]
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]
 
-pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/Supplementary_plots/enrichr_enrichment_factor3and1.pdf"),
+pdf(file = paste0("./paper/Supplementary_plots/enrichr_enrichment_factor3and1.pdf"),
     width = 8, height = 8)
 # basic scatterplot
 ggplot(enrichr_bioplanet2019, aes(x=odds_ratio, y=log_pval, label=label)) +
@@ -55,7 +55,7 @@ enrichr_bioplanet2019$label<-
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$log_pval>log_pval_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$log_pval>log_pval_cutoff]
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]
 
-pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/Supplementary_plots/enrichr_enrichment_factor2.pdf"),
+pdf(file = paste0("./paper/Supplementary_plots/enrichr_enrichment_factor2.pdf"),
     width = 16, height = 6)
 # basic scatterplot
 ggplot(enrichr_bioplanet2019, aes(x=odds_ratio, y=log_pval, label=label)) +
@@ -83,21 +83,28 @@ enrichr_bioplanet2019<-read.csv(file = "./results/phuego/enrichr_dfs/factor2_dow
 enrichr_bioplanet2019$label<-""
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$log_pval>log_pval_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$log_pval>log_pval_cutoff]
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]
+list_to_keep <- c('ERBB signaling pathway', 'mTOR signaling pathway', 'IGF1 pathway',
+                  'CBL−mediated ligand−induced downregulation of EGF receptors', 'Mammalian target of rapamycin complex 1 (mTORC1)−mediated signaling', 
+                  'S6K1 signaling',
+                  'Signaling events mediated by hepatocyte growth factor receptor (c−Met)', 
+                  'PI3K events in ERBB2 signaling', 'Signaling by ERBB2')
+#enrichr_bioplanet2019$label[!enrichr_bioplanet2019$label %in% list_to_keep]<- ''
 
-pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/Supplementary_plots/enrichr_enrichment_factor2.pdf"),
-    width = 10, height = 8)
+pdf(file = paste0("./paper/Supplementary_plots/enrichr_enrichment_factor2.pdf"),
+    width = 8, height = 8)
 # Basic scatterplot with improved ggrepel
 ggplot(enrichr_bioplanet2019, aes(x = odds_ratio, y = log_pval, label = label)) +
   geom_point() +
   ggrepel::geom_text_repel(
     min.segment.length = 0,
-    size = 5,
+    force_pull = 0,
+    size = 4, #should be 5
     segment.color = "black",  # Ensures lines are drawn to points
     segment.size = 0.5        # Adjust line thickness
   ) +
-  cowplot::theme_cowplot() +
+  cowplot::theme_cowplot(font_size = 20) +
   theme(
-    plot.title = element_text(size = 18, face = "bold"),
+    plot.title = element_text(size = 15, face = "bold"),
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)
   ) +
   grids(linetype = "dashed") +
@@ -114,7 +121,7 @@ ggplot(enrichr_bioplanet2019, aes(x = odds_ratio, y = log_pval, label = label)) 
   geom_point() +
   ggrepel::geom_text_repel(
     min.segment.length = 0,
-    size = 5,
+    size = 2, #should be 5
     segment.color = "black",  # Ensures lines are drawn to points
     segment.size = 0.5        # Adjust line thickness
   ) +
@@ -130,25 +137,29 @@ ggplot(enrichr_bioplanet2019, aes(x = odds_ratio, y = log_pval, label = label)) 
 
 dev.off()
 
-pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/Supplementary_plots/enrichr_enrichment_factor1.pdf"),
+pdf(file = paste0("./paper/Supplementary_plots/enrichr_enrichment_factor1.pdf"),
     width = 6)
 
 enrichr_bioplanet2019<-read.csv(file = "./results/phuego/enrichr_dfs/factor1.csv")
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$log_pval>log_pval_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$log_pval>log_pval_cutoff]
 enrichr_bioplanet2019$label[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]<-enrichr_bioplanet2019$term[enrichr_bioplanet2019$odds_ratio>odds_ratio_cutoff]
-
+list_to_keep <- c('Pathways in cancer', 'MAPK signaling pathway', 'Immune system',
+                  'FGFR1b ligand binding and activation', 'MAP kinase pathway regulation through dual specificity phosphatases', 'ERK activation',
+                  'Melanoma', 'Prolactin activation of MAPK signaling', 'FGF signaling pathway')
+enrichr_bioplanet2019$label[!enrichr_bioplanet2019$label %in% list_to_keep]<- ''
 # Basic scatterplot with improved ggrepel
 ggplot(enrichr_bioplanet2019, aes(x = odds_ratio, y = log_pval, label = label)) +
   geom_point() +
   ggrepel::geom_text_repel(
     min.segment.length = 0,
-    size = 3,
+    force_pull = 0,
+    size = 5,
     segment.color = "black",  # Ensures lines are drawn to points
     segment.size = 0.5        # Adjust line thickness
   ) +
-  cowplot::theme_cowplot() +
+  cowplot::theme_cowplot(font_size = 20) +
   theme(
-    plot.title = element_text(size = 18, face = "bold"),
+    plot.title = element_text(size = 15, face = "bold"),
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)
   ) +
   grids(linetype = "dashed") +

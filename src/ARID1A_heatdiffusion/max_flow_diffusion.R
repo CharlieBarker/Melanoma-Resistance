@@ -392,7 +392,7 @@ library(ggplot2)
 library(patchwork)
 
 pdf(file = paste0("./results/heatdiffusion/shortestpath_results.pdf"),
-    width = 10, height = 12)
+    width = 14, height = 16)
 
 ######FOR EGFR etc to JUN######
 

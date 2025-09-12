@@ -138,7 +138,7 @@ produce_lfc <- function(counts, contrast_matrix, replacement_Vec) {
 
 
 fit_levels<-c("groupCombinations.ARID1A_KO", "groupTrametinib.ARID1A_KO",   "groupUntreated.ARID1A_KO", "groupVemurafenib.ARID1A_KO",  
-              "groupCombinations.MED12_KO", "groupTrametinib.MED12_KO",   "groupUntreated.MED12_KO", "groupVemurafenib.MED12_KO", 
+              #"groupCombinations.MED12_KO", "groupTrametinib.MED12_KO",   "groupUntreated.MED12_KO", "groupVemurafenib.MED12_KO", 
               "groupCombinations.WT",        "groupTrametinib.WT", "groupUntreated.WT",          "groupVemurafenib.WT")
 contr_arid1a <- makeContrasts(groupUntreated.ARID1A_KO - groupUntreated.WT, levels = fit_levels)
 contr_combination <- makeContrasts(groupCombinations.WT - groupUntreated.WT, levels = fit_levels)
@@ -170,6 +170,9 @@ write.csv(x = lfc_combination_arid1a$`mRNA RNAseq/transcriptomics`,
           file = "./results/lfc/mRNA/combination_arid1a_lfc.csv")
 write.csv(x = lfc_combination_arid1a$`Protein abundance`,
           file = "./results/lfc/protein/combination_arid1a_lfc.csv")
+write.csv(x = lfc_combination_arid1a$`Phosphoproteomic abundance`,
+          file = "./results/lfc/phospho/combination_arid1a_lfc.csv")
+
 #arid1a trametinib
 lfc_trametinib_arid1a<-lapply(list_of_inputs, function(x){
   lfc<-produce_lfc(counts = x,
@@ -181,6 +184,9 @@ write.csv(x = lfc_trametinib_arid1a$`mRNA RNAseq/transcriptomics`,
           file = "./results/lfc/mRNA/trametinib_arid1a_lfc.csv")
 write.csv(x = lfc_trametinib_arid1a$`Protein abundance`,
           file = "./results/lfc/protein/trametinib_arid1a_lfc.csv")
+write.csv(x = lfc_trametinib_arid1a$`Phosphoproteomic abundance`,
+          file = "./results/lfc/phospho/trametinib_arid1a_lfc.csv")
+
 #arid1a vemurafenib
 lfc_vemurafenib_arid1a<-lapply(list_of_inputs, function(x){
   lfc<-produce_lfc(counts = x,
@@ -192,6 +198,8 @@ write.csv(x = lfc_vemurafenib_arid1a$`mRNA RNAseq/transcriptomics`,
           file = "./results/lfc/mRNA/vemurafenib_arid1a_lfc.csv")
 write.csv(x = lfc_vemurafenib_arid1a$`Protein abundance`,
           file = "./results/lfc/protein/vemurafenib_arid1a_lfc.csv")
+write.csv(x = lfc_vemurafenib_arid1a$`Phosphoproteomic abundance`,
+          file = "./results/lfc/phospho//vemurafenib_arid1a_lfc.csv")
 
 #print lfc for RNAseq ARID1A - so that we can generate figure 4
 write.csv(x = lfc_arid1a$`mRNA RNAseq/transcriptomics`,

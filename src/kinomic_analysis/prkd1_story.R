@@ -120,26 +120,31 @@ drug_targets <- drug_targets[drug_targets$experiment %in% c("WT/Combined vs Untr
 drug_targets$Gene_name <- factor(drug_targets$Gene_name, levels=kinases_of_interest)
 
 pdf(file = "~/Desktop/Melanoma_Resistance/results/kinomics_microarray/prkd1_story.pdf",   # The directory you want to save the file in
-    width = 6,  # The width of the plot in inches
-    height = 8) # The height of the plot in inches
+    width = 6.5,  # The width of the plot in inches
+    height = 6) # The height of the plot in inches
 drug_targets$experiment[drug_targets$experiment=="ARID1A_KO/ARID1A Combined vs Untreated"] <- "ARID1A KO/Combined vs Untreated"
-ggplot(drug_targets[!is.na(drug_targets$experiment),], aes(x=Gene_name, y=`Median Kinase Statistic`,
-                                                           colour=`Median Kinase Statistic`)) +
+ggplot(drug_targets[!is.na(drug_targets$experiment),], 
+       aes(x = Gene_name, y = `Median Kinase Statistic`,
+           colour = `Median Kinase Statistic`)) +
   scale_colour_gradientn(colours = pal) +
-  geom_hline(yintercept = 0, color = "black") + # Add horizontal line at y=0
-  geom_segment(aes(x=Gene_name, xend=Gene_name, y=0, yend=`Median Kinase Statistic`), color="grey") +
-  geom_point(aes(size = `Mean Specificity Score`)) +  # Adjust the size of points here
+  geom_hline(yintercept = 0, color = "black") + # horizontal line at y=0
+  geom_segment(aes(x = Gene_name, xend = Gene_name, y = 0, yend = `Median Kinase Statistic`), color = "grey") +
+  geom_point(aes(size = `Mean Specificity Score`)) +  # point sizes
   cowplot::theme_cowplot() +
   theme(
-    plot.title = element_text(size = 15, face = "bold"),
-    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
-    axis.text.x = element_text(angle = 90, hjust = 1) # Rotate x-axis labels
+    plot.title = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 15),
+    axis.text.y = element_text(size = 18),
+    strip.text = element_text(size = 12), # facet labels
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 16),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)
   ) +
   grids(linetype = "dashed") +
   facet_wrap(~experiment, scales = "free_x", nrow = 2) +
   xlab("") +
   ylab("Median Kinase Statistic")
-
 
 dev.off()
 

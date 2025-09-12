@@ -59,7 +59,7 @@ results_dir <- "./results/phuego/"
 factor_graphs <- list()
 factor_genes_names <- list()
 
-factor_to_vis<-"Factor1"
+factor_to_vis<-"Factor2"
 
 # Process each factor
 for (factor in factorS) {
@@ -159,9 +159,8 @@ centrality_plot <- function(graph_in, title, factor_weights) {
 # Create the centrality plots with titles
 factor1_up_centrality<-centrality_plot(factor_graphs[[factor_to_vis]]$up, paste0(factor_to_vis, " Up - Centrality Plot"), collapsed_factor_weights)
 factor1_down_centrality<-centrality_plot(factor_graphs[[factor_to_vis]]$down, paste0(factor_to_vis, " Down - Centrality Plot"), collapsed_factor_weights)
+
 factor_centrality<-rbind(factor1_up_centrality, factor1_down_centrality)
-
-
 # Order and rank centrality
 factor_centrality <- factor_centrality[order(factor_centrality$values, decreasing = TRUE), ]
 factor_centrality$rank <- 1:nrow(factor_centrality)
@@ -172,22 +171,22 @@ genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = as.character(fac
                                      columns = "GENENAME")
 factor_centrality$names <- genename_df$GENENAME[match(factor_centrality$ind, genename_df$UNIPROTID)]
 
-factor_centrality$names[factor_centrality$rank > 30] <- ""
+factor_centrality$names[factor_centrality$rank > 25] <- ""
 
 centrality_plots<-ggplot(factor_centrality, aes(x = rank, y = values, label = names)) +
   geom_point(color = "darkred") +
-  geom_text_repel(colour = "black", force = 15) +
+  geom_text_repel(colour = "black", force = 15, size = 6) +
   scale_colour_gradientn(colours = pal) +
   labs(x = "Rank in network", y = "Centrality (PageRank)",
-       title = "Centrality of Network describing combined drug-agnostic changes") +
-  cowplot::theme_cowplot() +
+       title = "Centrality of Network describing combination-specific changes") +
+  cowplot::theme_cowplot(font_size = 20) +
   theme(
-    plot.title = element_text(size = 12, face = "bold"),
+    plot.title = element_text(size = 15, face = "bold"),
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)
   ) +
   grids(linetype = "dashed")
 
-pdf(file = "./paper/Figures/drug_agnostic_centrality.pdf", width = 6)
+pdf(file = "./paper/Figures/combination_drug_centrality.pdf", width = 6)
 centrality_plots
 dev.off()
 

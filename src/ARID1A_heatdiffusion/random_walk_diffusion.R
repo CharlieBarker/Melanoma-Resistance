@@ -288,7 +288,7 @@ conv_nodes<-data.frame(uniprt=V(g)$name,
 
 #print network for supplementary
 # Open PDF to save plots
-pdf(file = "paper/Supplementary_plots/combined_factor_network.pdf", width = 20, height = 20)
+pdf(file = "paper/Supplementary_plots/combined_factor_network_test.pdf", width = 20, height = 20)
 # Identify nodes that belong to each factor individually and both
 factor1_nodes <- V(g)$name[V(g)$name %in% V(union_factor_graphs[["Factor1"]])$name]
 factor3_nodes <- V(g)$name[V(g)$name %in% V(union_factor_graphs[["Factor3"]])$name]

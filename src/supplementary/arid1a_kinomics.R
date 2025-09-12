@@ -170,8 +170,8 @@ write.csv(to_supp, file = paste0(output_dir, "/Supplementary_Table_S5.csv"), row
 
 # Step 1: Call the pdf command to start the plot
 pdf(file = "~/Desktop/Melanoma_Resistance/paper/Supplementary_plots/kinomics_arid1a.pdf",   # The directory you want to save the file in
-    width = 12,  # The width of the plot in inches
-    height = 8) # The height of the plot in inches
+    width = 20,  # The width of the plot in inches
+    height = 20) # The height of the plot in inches
 
 # Display the plots
 plot_grid(ptk_plot, stk_plot)
