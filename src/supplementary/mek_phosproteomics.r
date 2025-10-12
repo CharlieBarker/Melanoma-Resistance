@@ -24,9 +24,37 @@ kinase_net <- data.frame(
 kinase_net <- kinase_net %>%
   group_by(source, target) %>%
   summarise(mor = mean(mor), .groups = "drop")
+MAP2K1<-kinase_net[kinase_net$source == 'ERK1',]
+
+wt_combo_phospho<-read.csv(file = "./results/lfc/phospho/combination_lfc.csv")
+arid1a_combo_phospho<-read.csv(file = "./results/lfc/phospho/combination_arid1a_lfc.csv")
+
+total_lfc<-rbind(data.frame(wt_combo_phospho[wt_combo_phospho$X %in% MAP2K1$target,], cond = 'WT'), 
+                 data.frame(arid1a_combo_phospho[arid1a_combo_phospho$X %in% MAP2K1$target,], cond = 'ARID1A KO'))
+
+library(ggplot2)
+library(dplyr)
+
+# Assuming your dataframe is named total_lfc
+# and has columns: Gene, logFC, cond
+
+# Ensure factors are ordered nicely
+total_lfc$cond <- factor(total_lfc$cond, levels = c("WT", "ARID1A KO"))
+
+# Paired boxplot with lines connecting the same genes
+ggplot(total_lfc, aes(x = cond, y = logFC, fill = cond)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+  geom_point(position = position_jitter(width = 0.1), alpha = 0.4, size = 1) +
+  geom_line(aes(group = Gene), color = "gray60", alpha = 0.4) +
+  theme_minimal(base_size = 14) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Log Fold-Change by Genetic Condition",
+    x = "Genotype",
+    y = "log2 Fold Change"
+  )
 
 
-combo_phospho<-read.csv(file = "./results/lfc/phospho/combination_lfc.csv")
 tram_phospho<-read.csv(file = "./results/lfc/phospho/trametinib_lfc.csv")
 vem_phospho<-read.csv(file = "./results/lfc/phospho/vemurafenib_lfc.csv")
 

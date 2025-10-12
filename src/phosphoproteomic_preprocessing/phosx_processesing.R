@@ -1,5 +1,7 @@
 library(purrr)
+library(limma)
 library(stringr)
+source("./src/functions/default_variables.R")
 
 format_peptide <- function(entry) {
   # Split entry into parts
@@ -114,7 +116,7 @@ ARID1A_KO_comb_vs_untreated<-topTable(fit2, coef="ARID1A_KO_comb_vs_untreated", 
 WT_comb_vs_untreated<-topTable(fit2, coef="WT_comb_vs_untreated", sort.by = "P", n = Inf)
 
 # Make sure your object is a data.frame
-df <- ARID1A_KO_comb_vs_untreated
+df <- WT_comb_vs_untreated
 df$Gene <- rownames(df)
 # Extract peptide sequences + logFC
 seqrnk <- df[, c("Gene", "logFC")]
@@ -125,7 +127,7 @@ seqrnk$logFC <- round(seqrnk$logFC, digits = 5)
 # Write to file (tab-separated, no headers/quotes, rownames suppressed)
 write.table(
   seqrnk,
-  file = "results/lfc_phosX/ARID1A_KO_comb_vs_untreated.seqrnk",
+  file = "results/lfc_phosX/WT_KO_comb_vs_untreated.seqrnk",
   sep = "\t",
   quote = FALSE,
   row.names = FALSE,
