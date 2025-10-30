@@ -159,7 +159,7 @@ plot_labelled_factor_weights<-function(factor_list,
   return(g1)
 }
 
-pdf(file = "plots/Factor_weights.pdf",width=10,height=14)
+pdf(file = "paper/plots/Factor_weights.pdf",width=10,height=14)
 ggpubr::ggarrange(#Factor 1
                   plot_factor(mofa, factor = 1, color_by = "Drug", shape_by = "Genetic") + 
                     theme(legend.position="none")+ coord_flip()+

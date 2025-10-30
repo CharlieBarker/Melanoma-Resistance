@@ -6,6 +6,7 @@ RTKs<-c("EGFR", "FGFR2", "FGFR1", "IGF1R", "INSR", "FYN", "NTRK2", "MET",  #rece
         "ABL2", "TXK", "FLT1") #non receptor tyrosine.
 STKs<-c("MAPK3", "MAPK1", "PRKD1", "JUN", "DAPK1", "MAPK8", "MAPK9", "MAPK10") #serine/threonine kinases.
 
+design<-read.csv(file = './data/RNAseq/Study_design.csv')
 kinase_list<-rbind(data.frame(gene_name=RTKs, type="tyrosine kinase"),
                    data.frame(gene_name=STKs, type="serine/threonine kinase"))
 conv_nodes<-data.frame(uniprt=V(g)$name,
