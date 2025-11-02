@@ -172,6 +172,7 @@ write.csv(x = lfc_combination_arid1a$`Protein abundance`,
           file = "./results/lfc/protein/combination_arid1a_lfc.csv")
 write.csv(x = lfc_combination_arid1a$`Phosphoproteomic abundance`,
           file = "./results/lfc/phospho/combination_arid1a_lfc.csv")
+lfc_combination_arid1a<-bind_rows(lfc_combination_arid1a, .id = "column_label")
 
 #arid1a trametinib
 lfc_trametinib_arid1a<-lapply(list_of_inputs, function(x){
@@ -186,6 +187,7 @@ write.csv(x = lfc_trametinib_arid1a$`Protein abundance`,
           file = "./results/lfc/protein/trametinib_arid1a_lfc.csv")
 write.csv(x = lfc_trametinib_arid1a$`Phosphoproteomic abundance`,
           file = "./results/lfc/phospho/trametinib_arid1a_lfc.csv")
+lfc_trametinib_arid1a<-bind_rows(lfc_trametinib_arid1a, .id = "column_label")
 
 #arid1a vemurafenib
 lfc_vemurafenib_arid1a<-lapply(list_of_inputs, function(x){
@@ -200,6 +202,7 @@ write.csv(x = lfc_vemurafenib_arid1a$`Protein abundance`,
           file = "./results/lfc/protein/vemurafenib_arid1a_lfc.csv")
 write.csv(x = lfc_vemurafenib_arid1a$`Phosphoproteomic abundance`,
           file = "./results/lfc/phospho//vemurafenib_arid1a_lfc.csv")
+lfc_vemurafenib_arid1a<-bind_rows(lfc_vemurafenib_arid1a, .id = "column_label")
 
 #print lfc for RNAseq ARID1A - so that we can generate figure 4
 write.csv(x = lfc_arid1a$`mRNA RNAseq/transcriptomics`,
@@ -639,5 +642,67 @@ ggplot(df, aes(x = rank_within_factor,
                   size=2, force_pull = 2)+
   geom_hline(yintercept = 0, linetype = 'dotted', col = 'darkred')
 dev.off()
+
+
+#### Store full statistics for all comparisons ####
+
+# Combine all LFC tables with their comparison type
+lfc_all_stats <- list(
+  "WT_vs_ARID1A_KO" = lfc_arid1a,
+  "Combination_vs_Untreated_WT" = lfc_combination,
+  "Trametinib_vs_Untreated_WT" = lfc_trametinib,
+  "Vemurafenib_vs_Untreated_WT" = lfc_vemurafenib,
+  "Combination_ARID1A_KO_vs_Untreated_ARID1A_KO" = lfc_combination_arid1a,
+  "Trametinib_ARID1A_KO_vs_Untreated_ARID1A_KO" = lfc_trametinib_arid1a,
+  "Vemurafenib_ARID1A_KO_vs_Untreated_ARID1A_KO" = lfc_vemurafenib_arid1a
+)
+
+
+# Combine all stats into one long data frame
+lfc_all_df <- bind_rows(lapply(names(lfc_all_stats), function(comp) {
+  df <- lfc_all_stats[[comp]]
+  df$comparison <- comp
+  return(df)
+}))
+
+# Detect data type from column_label
+lfc_all_df <- lfc_all_df %>%
+  mutate(
+    data_type = case_when(
+      grepl("Protein", column_label, ignore.case = TRUE) ~ "Proteomics",
+      grepl("Phosphoproteomic", column_label, ignore.case = TRUE) ~ "Phosphoproteomics",
+      grepl("transcriptomics", column_label, ignore.case = TRUE) ~ "Transcriptomics",
+      TRUE ~ "Other"
+    )
+  )
+# Map old comparison names to clearer labels
+comparison_labels <- c(
+  "WT_vs_ARID1A_KO" = "Untreated ARID1A-KO vs Untreated WT",
+  "Combination_vs_Untreated_WT" = "Combination (BRAFi+MEKi) vs Untreated (WT)",
+  "Trametinib_vs_Untreated_WT" = "Trametinib vs Untreated (WT)",
+  "Vemurafenib_vs_Untreated_WT" = "Vemurafenib vs Untreated (WT)",
+  "Combination_ARID1A_KO_vs_Untreated_ARID1A_KO" = "Combination (BRAFi+MEKi) vs Untreated (ARID1A-KO)",
+  "Trametinib_ARID1A_KO_vs_Untreated_ARID1A_KO" = "Trametinib vs Untreated (ARID1A-KO)",
+  "Vemurafenib_ARID1A_KO_vs_Untreated_ARID1A_KO" = "Vemurafenib vs Untreated (ARID1A-KO)"
+)
+
+# Apply clearer names
+lfc_all_df$comparison <- dplyr::recode(lfc_all_df$comparison, !!!comparison_labels)
+
+# Split by data type
+lfc_proteomics <- lfc_all_df %>% dplyr::filter(data_type == "Proteomics")
+lfc_phospho <- lfc_all_df %>% dplyr::filter(data_type == "Phosphoproteomics")
+lfc_transcriptomics <- lfc_all_df %>% dplyr::filter(data_type == "Transcriptomics")
+
+# Save each as a Supplementary Table
+write.csv(lfc_proteomics,
+          file = "./paper/supplementary_tables//Table_S2_Proteomics_LFCs.csv",
+          row.names = FALSE)
+write.csv(lfc_phospho,
+          file = "./paper/supplementary_tables/Table_S3_Phosphoproteomics_LFCs.csv",
+          row.names = FALSE)
+write.csv(lfc_transcriptomics,
+          file = "./paper/supplementary_tables/Table_S4_Transcriptomics_LFCs.csv",
+          row.names = FALSE)
 
 

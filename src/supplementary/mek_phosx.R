@@ -6,6 +6,9 @@ library(volcanoPlus)
 library(ghibli)
 library(ggpubr)
 
+setwd("~/Desktop/Melanoma_Resistance//")
+
+
 # 
 # ██████╗░██╗░░██╗░█████╗░░██████╗██╗░░██╗
 # ██╔══██╗██║░░██║██╔══██╗██╔════╝╚██╗██╔╝
@@ -78,31 +81,6 @@ df$color[df$logFC < -logFC_cutoff & df$adj.P.Val < pval_cutoff] <- "Down"
 genes_of_interest <- c("MAPK1", "MAP2K1", "BRAF")
 df$highlight <- ifelse(df$Gene %in% genes_of_interest, "Yes", "No")
 
-ggplot(df, aes(x = logFC, y = negLogP, color = color)) +
-  geom_point(size = 3, alpha = 0.8) +
-  # Highlight points of interest with larger shape
-  geom_point(data = subset(df, highlight == "Yes"),
-             aes(x = logFC, y = negLogP), 
-             shape = 21, fill = "blue", color = "black", size = 4, stroke = 1.2) +
-  # Label genes of interest
-  ggrepel::geom_text_repel(data = subset(df, highlight == "Yes"),
-                           aes(label = Gene), size = 4, color = "black", min.segment.length = 3) +
-  scale_color_manual(values = c("Down" = "blue", "Up" = "red", "NotSig" = "grey")) +
-  geom_vline(xintercept = c(-logFC_cutoff, logFC_cutoff), linetype = "dashed") +
-  geom_hline(yintercept = -log10(pval_cutoff), linetype = "dashed") +
-  cowplot::theme_cowplot() +
-  theme(
-    plot.title = element_text(size=18),
-    axis.text.x = element_text(angle = 70, hjust = 1, size = rel(1)),
-  ) +
-  xlab("") +
-  grids(linetype = "dashed")+
-  labs(
-    x = "Activity Score",
-    y = "P value",
-    title = "A375 Kinase activity after treatment with combination therapy"
-  )
-
 # Merge by kinase name (X)
 merged <- wt %>%
   dplyr::select(X, Activity.Score) %>%
@@ -120,21 +98,50 @@ merged <- merged %>%
 merged$label <- ''
 merged$label[grep(merged$X, pattern = 'MAPK')] <- merged$X[grep(merged$X, pattern = 'MAPK')]
 
-# Scatter plot with labels
-ggplot(merged, aes(x = WT_Activity, y = KO_Activity)) +
-  geom_point(color = "steelblue", size = 3, alpha = 0.7) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
-  geom_text_repel(
-    data = merged,
-    aes(label = label),
-    size = 4,
-    max.overlaps = 20,
-    box.padding = 0.3,
-    point.padding = 0.2
+png('./paper/response_to_reviewers/phosX.png')
+
+ggplot(df, aes(x = logFC, y = negLogP, color = color)) +
+  geom_point(size = 3, alpha = 0.8) +
+  # Highlight points of interest with larger shape
+  geom_point(data = subset(df, highlight == "Yes"),
+             aes(x = logFC, y = negLogP), 
+             shape = 21, fill = "blue", color = "black", size = 4, stroke = 1.2) +
+  # Label genes of interest
+  ggrepel::geom_text_repel(data = subset(df, highlight == "Yes"),
+                           aes(label = Gene), size = 4, color = "black", min.segment.length = 3) +
+  scale_color_manual(values = c("Down" = "blue", "Up" = "red", "NotSig" = "grey")) +
+  geom_vline(xintercept = c(-logFC_cutoff, logFC_cutoff), linetype = "dashed") +
+  geom_hline(yintercept = -log10(pval_cutoff), linetype = "dashed") +
+  cowplot::theme_cowplot() +
+  theme(
+    plot.title = element_text(size=12),
+    axis.text.x = element_text(angle = 70, hjust = 1, size = rel(1)),
   ) +
-  theme_minimal(base_size = 14) +
+  xlab("") +
+  grids(linetype = "dashed")+
   labs(
-    title = "Kinase activity comparison",
-    x = "WT Activity Score",
-    y = "ARID1A KO Activity Score"
+    x = "Activity Score",
+    y = "P value",
+    title = "A375 Kinase activity after treatment with combination therapy"
   )
+
+
+# # Scatter plot with labels
+# ggplot(merged, aes(x = WT_Activity, y = KO_Activity)) +
+#   geom_point(color = "steelblue", size = 3, alpha = 0.7) +
+#   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+#   geom_text_repel(
+#     data = merged,
+#     aes(label = label),
+#     size = 4,
+#     max.overlaps = 20,
+#     box.padding = 0.3,
+#     point.padding = 0.2
+#   ) +
+#   theme_minimal(base_size = 14) +
+#   labs(
+#     title = "Kinase activity comparison",
+#     x = "WT Activity Score",
+#     y = "ARID1A KO Activity Score"
+#   )
+dev.off()

@@ -4,6 +4,9 @@ library(readr)
 library(igraph)
 library(dplyr)
 library(tidyr)
+library(ggraph)
+
+setwd("~/Desktop/Melanoma_Resistance//")
 
 names_for_subnet <-factor_centrality$ind[factor_centrality$rank < 50]
 
@@ -60,7 +63,7 @@ L_df <- L_df %>%
 
 
 
-pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/networks/test.pdf"),
+pdf(file = paste0("./paper/networks/test.pdf"),
     width = 18, height = 15)
 # Generate the plot
 ggraph(subnet, layout = subnet_l) +

@@ -194,29 +194,31 @@ make_comparison_plot <- function(factor_name, universe, factor_genes_df, quantil
     arrange(delta_rank) %>%
     mutate(label = if_else(row_number() <= 10 | row_number() > (n() - 10), Description, NA_character_))
   
-  rankPlot <- ggplot(rank_labeled, aes(x = reorder(Description, delta_rank), y = delta_rank)) +
-    geom_segment(aes(xend = Description, y = 0, yend = delta_rank), color = "gray") +
+  rankPlot <- ggplot(rank_labeled, aes(x = delta_rank, y = reorder(Description, delta_rank))) +
+    geom_segment(aes(xend = 0, yend = Description), color = "gray") +
     geom_point(aes(color = delta_rank > 0), size = 3) +
-    geom_text_repel(
+    geom_text(
       aes(label = label),
       size = 3,
-      nudge_y = 2,
-      direction = "y",
-      box.padding = 0.3,
-      segment.color = "black"
+      hjust = -0.1    # nudge text slightly to the right
     ) +
-    coord_flip() +
     labs(
       title = "Rank Change of GO Terms",
-      x = "GO Term",
-      y = "Rank Change (Network Propagation - MOFA)"
+      x = "Rank Change (Network Propagation - MOFA)",
+      y = "Rank"
     ) +
-    cowplot::theme_cowplot() +
+    theme_cowplot() +
     theme(
       plot.title = element_text(size = 12, face = "bold"),
-      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+      axis.text.y = element_blank(),  # hide y-axis term labels
+      axis.ticks.y = element_blank()  # hide y-axis ticks
     ) +
-    grids(linetype = "dashed")
+    # dashed grid lines along x-axis only
+    theme(panel.grid.major.x = element_line(linetype = "dashed"),
+          panel.grid.minor.x = element_blank(),
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor.y = element_blank())
   
   return(list(rank=rankPlot, scatter = scatterPlot))
 }
@@ -242,26 +244,23 @@ final_plot <- plot_grid(
   rel_heights = c(1, 1, 1)
 )
 
-
-
 # Save to PDF
 ggsave("~/Desktop/Melanoma_Resistance/paper/response_to_reviewers/GO_comparison_plots.pdf", 
-       final_plot, width = 8, height = 16, units = "in")
+       final_plot, width = 8, height = 10, units = "in")
 
 
 final_plot <- plot_grid(
   plot1$rank,
   plot2$rank,
   plot3$rank,
-  ncol = 1,
+  ncol = 3,
   align = "hv",     # Align both horizontal and vertical axes
-  axis = "tblr",    # Align top/bottom/left/right
-  rel_heights = c(1, 1, 1)
+  axis = "tblr"    # Align top/bottom/left/right
 )
 
 
 
 # Save to PDF
 ggsave("~/Desktop/Melanoma_Resistance/paper/response_to_reviewers/GO_rank_plots.pdf", 
-       final_plot, width = 16, height = 30, units = "in")
+       final_plot, width = 20, height = 12, units = "in")
 

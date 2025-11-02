@@ -31,6 +31,27 @@ combined_peptides<-combined_peptides[,!grepl(grps, pattern = "MED12")]
 design<-design[!grepl(design$total, pattern = "MED12"),]
 grps<-grps[!grepl(grps, pattern = "MED12")]
 
+# Extract TMT run (plex) names correctly
+plexes <- unique(gsub(".*(plex[0-9]+)$", "\\1", grep("plex", colnames(combined_peptides), value = TRUE)))
+
+# Count quantified (non-NA) phosphosites per TMT run
+plex_counts <- sapply(plexes, function(p) {
+  cols <- grep(paste0(p, "$"), colnames(combined_peptides), value = TRUE)
+  sum(rowSums(!is.na(combined_peptides[, cols])) > 0)
+})
+
+# Summarize
+mean_sites <- mean(plex_counts)
+sd_sites <- sd(plex_counts)
+
+data.frame(
+  Plex = plexes,
+  Quantified_Phosphosites = plex_counts
+)
+cat("\nAverage quantified phosphosites per TMT run:",
+    round(mean_sites), "±", round(sd_sites), "\n")
+
+
 ####IMPUTATION####
 
 combined_peptides<-normSLN(combined_peptides)
