@@ -14,3 +14,35 @@ This project examines the signaling and immune dynamics underlying drug resistan
 
 ## Repository Structure
 
+scripts to reproduce figures
+
+figure 1
+1D - mofa_supplementary.r
+
+figure 2
+2A - ~/Desktop/Melanoma_Resistance/src/phuego/supplementary_plot_networks.R set factor variable to factor1
+2B - ~/Desktop/Melanoma_Resistance/src/phuego/enrichr_ggplot.R
+2C - ~/Desktop/Melanoma_Resistance/src/phuego/ego_nets.R set factor variable to factor1
+2D - ~/Desktop/Melanoma_Resistance/src/visualisation/figure2_heatmap.R
+2E - ~/Desktop/Melanoma_Resistance/src/visualisation/figure2_heatmap.R
+
+figure 3
+3A - ~/Desktop/Melanoma_Resistance/src/phuego/supplementary_plot_networks.R set factor variable to factor2
+3B - ~/Desktop/Melanoma_Resistance/src/phuego/ego_nets.R set factor variable to factor2
+3C - ~/Desktop/Melanoma_Resistance/src/visualisation/combination_phosphosite.R
+3D - ~/Desktop/Melanoma_Resistance/src/phuego/enrichr_ggplot.R
+
+figure 4
+4A - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/ARID1A_heatmaps.R
+4B - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/ARID1A_heatmaps.R
+4C - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/random_walk_diffusion.R
+4E - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/ephrin_diffusion.R
+4G - ~/Desktop/Melanoma_Resistance/src/kinomic_analysis/prkd1_story.R
+
+figure 5
+5A -
+5B -
+5C -
+5D - 
+5E -
+
