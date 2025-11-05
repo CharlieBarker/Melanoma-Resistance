@@ -128,6 +128,8 @@ data_matrix <- data.matrix(heatmap_data[, -1])
 rownames(data_matrix) <- heatmap_data$`Kinase Name`
 
 data_matrix<-t(data_matrix[,!colnames(data_matrix) %in% 'Kinase Name'])
+write.csv(data.matrix(data_matrix[experiments_to_see,]), file = 'paper/all_figure_data/4A.csv')
+
 kinase_activity<-Heatmap(data.matrix(data_matrix[experiments_to_see,]),
                          name = "Median Kinase Activity (LFC)",
                          na_col = "darkgrey",
@@ -214,8 +216,8 @@ significance_matrix <- all_lfcs_df %>%
   dplyr::select(-adj.P.Val) %>%
   # Ensure we have unique values for each gene
   group_by(Gene, data_type) %>%
-  summarise(Significance = max(Significance), .groups = 'drop') %>%
   pivot_wider(names_from = Gene, values_from = Significance)
+
 significance_matrix[is.na(significance_matrix)] <- ""
 data_matrix <- data.matrix(logFC_matrix[, -1])
 rownames(data_matrix) <- logFC_matrix$data_type
@@ -228,6 +230,8 @@ significance_matrix_to_plot<-significance_matrix[-1]
 
 data_matrix<-data_matrix[, names(nodes_to_see_proteins)]
 significance_matrix_to_plot<-significance_matrix_to_plot[, names(nodes_to_see_proteins)]
+
+write.csv(all_lfcs_df, file = 'paper/all_figure_data/4B.csv')
 
 protein_heatmap<-Heatmap(t(data_matrix[2,]), cluster_rows = FALSE, cluster_columns = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {

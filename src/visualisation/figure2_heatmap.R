@@ -144,6 +144,7 @@ kinase_activity<-Heatmap(data.matrix(data_matrix[experiments_to_see,]),
                          column_split = unname(nodes_to_see)[nodes_to_see != "Phosphatases"],
                          heatmap_width = unit(25, "cm")
 )
+write.csv(data_matrix[experiments_to_see,], file = 'paper/all_figure_data/2E.csv')
 
 
 mRNA_LFC<-list(
@@ -266,6 +267,8 @@ protein_heatmap <- Heatmap(
 
 # Combine the heatmaps with phosphatases first
 combined_heatmap <- mRNA_heatmap %v% protein_heatmap
+write.csv(protein_to_plot$data_matrix, file = 'paper/all_figure_data/2D_protein.csv')
+write.csv(mRNA_to_plot$data_matrix, file = 'paper/all_figure_data/2D_mRNA.csv')
 
 # Generate the PDF
 pdf(file = "~/Desktop/Melanoma_Resistance/paper/Figures/drug_agnostic_heatmap.pdf",

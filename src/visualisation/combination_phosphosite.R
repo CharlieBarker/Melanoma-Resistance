@@ -68,7 +68,7 @@ interesting_phospho_lm <- interesting_phospho_lm %>%
 pdf(file = "~/Desktop/Melanoma_Resistance/paper/Figures/combination_phosphosites.pdf",   # The directory you want to save the file in
     width = 25, # The width of the plot in inches
     height = 3.5) # The height of the plot in inches
-
+write.csv(interesting_phospho_lm, file = 'paper/all_figure_data/3C.csv')
 ggplot(interesting_phospho_lm,
        aes(x = psite, y = logFC, fill=sign)) +
   geom_col(width = 0.7) +

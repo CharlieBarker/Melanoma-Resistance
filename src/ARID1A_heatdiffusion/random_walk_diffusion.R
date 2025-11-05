@@ -434,7 +434,6 @@ normalize_vector <- function(vec) {
 
   return(normalized_vec)
 }
-
 # Perform a random walk and get stationary distribution
 perform_random_walk <- function(graph, start_vector) {
   adj_matrix <- as_adjacency_matrix(graph)
@@ -443,6 +442,8 @@ perform_random_walk <- function(graph, start_vector) {
                     correct.for.hubs = T,do.analytical = T)
   return(pt$p.inf)
 }
+save.image(file = '~/Desktop/test.RData')
+
 
 
 ####ARID1A####

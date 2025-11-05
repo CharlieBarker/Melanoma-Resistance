@@ -1,5 +1,4 @@
 
-
 # Load required libraries
 library(readxl)
 library(ggplot2)
@@ -111,6 +110,7 @@ new_up<-factor_graphs$Factor1$down
 new_down<-factor_graphs$Factor1$up
 factor_graphs$Factor1$down<-new_down
 factor_graphs$Factor1$up<-new_up
+
 
 
 weights$node<-unlist(map(str_split(weights$feature, pattern = "_"),1))
@@ -302,7 +302,6 @@ ggraph(g3, layout = "fr") +
 # Close PDF device
 dev.off()
 
-
 conv_nodes<-data.frame(uniprt=V(g)$name,
                        gene_name=V(g)$Gene_name)
 
@@ -367,9 +366,15 @@ L_df <- L_df %>%
 
 
 
-pdf(file = paste0("/Users/charliebarker/Desktop/Melanoma_Resistance/paper/networks/PCSF_", factor_to_vis, ".pdf"),
+pdf(file = paste0("~/Desktop/Melanoma_Resistance/paper/networks/PCSF_", factor_to_vis, ".pdf"),
     width = 18, height = 15)
 # Generate the plot
+vertices_df <- as_data_frame(subnet, what = "vertices")
+edges_df <- as_data_frame(subnet, what = "edges")
+
+write.csv(vertices_df, file = 'paper/all_figure_data/3B_vertex.csv')
+write.csv(vertices_df, file = 'paper/all_figure_data/3B_edges.csv')
+
 ggraph(subnet, layout = subnet_l) +
   geom_point(data = L_df[L_df$Gene_name != "Centroid_All_Factors",],
              aes(x = x, y = y, colour = protein_Factor3),
@@ -597,13 +602,13 @@ gene_names <- c("EGFR", "SRC", "AKT1", "MAP3K7")
 # #factor3
 # gene_names <- c("MAP3K5", "FGFR1", "FGFR2", "MAP2K3", "PTK2")
 
-# Generate plots for each gene name
-plots <- lapply(gene_names, create_ego_net_plot, g = g, conv_nodes = conv_nodes, factor_genes_names_df = factor_genes_names_df, weights=weights)
-
-# Display the plots
-for (plot in plots) {
-  print(plot)
-}
+# # Generate plots for each gene name
+# plots <- lapply(gene_names, create_ego_net_plot, g = g, conv_nodes = conv_nodes, factor_genes_names_df = factor_genes_names_df, weights=weights)
+# 
+# # Display the plots
+# for (plot in plots) {
+#   print(plot)
+# }
 
 plot_both_modes <- function(gene){
   out<-list(protein=plot_raw_data_ego(node_gene_name = gene, "protein"),
@@ -611,12 +616,12 @@ plot_both_modes <- function(gene){
   return(out)
 }
 
-# Generate plots for each gene name
-plots <- lapply(gene_names, plot_both_modes)
-
-# Display the plots
-for (plot in plots) {
-  print(plot)
-}
+# # Generate plots for each gene name
+# plots <- lapply(gene_names, plot_both_modes)
+# 
+# # Display the plots
+# for (plot in plots) {
+#   print(plot)
+# }
 dev.off()
 

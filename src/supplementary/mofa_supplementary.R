@@ -38,13 +38,13 @@ factors_melanoma_long <- factors_melanoma_long %>%
 pdf(file = "./paper/Figures/mofa_Factors.pdf",width=8,height=5.5)
 
 # Plot
+write.csv(factors_melanoma_long, file = 'paper/all_figure_data/1D.csv')
 ggplot(factors_melanoma_long, aes(x = 1, y = Value, 
                     shape = ARID1A_status, color = Treatment)) +
   facet_wrap(~ Factor, scales = 'free_y') +
   geom_jitter(width = 0.1, size = 4, alpha = 0.8) +
   labs(y = "Factor value", x = "Factor", 
        shape = "ARID1A status", color = "Treatment") + 
-  scale_color_manual(values = drug_colors)  +
   cowplot::theme_cowplot(font_size = 16) +   # increase overall font size
   theme(
     plot.title = element_text(size = 20, face = "bold"),
@@ -54,8 +54,7 @@ ggplot(factors_melanoma_long, aes(x = 1, y = Value,
     strip.text = element_text(size = 16, face = "bold"),  # facet labels bigger
     legend.text = element_text(size = 14),
     legend.title = element_text(size = 15)
-  ) +
-  grids(linetype = "dashed") 
+  ) 
 dev.off()
 
 variance_explained<-data.frame(head(MOFAobject.trained@cache$variance_explained$r2_per_factor[[1]]))

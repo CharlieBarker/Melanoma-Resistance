@@ -23,6 +23,9 @@ library(cowplot)
 library(dplyr)
 library(tidyr)
 library(EnsDb.Hsapiens.v86)
+library(ggraph)
+
+
 
 
 normalize_vector <- function(vec) {
@@ -314,7 +317,6 @@ complete_df<-rbind(data.frame(proteins_df, data="Protein abundace"),
                    data.frame(rna_df, data="mRNA abundace"))
 
 
-library(ggraph)
 
 pdf(file = "~/Desktop/Melanoma_Resistance/results/heatdiffusion/ephrin_activity_diffusion.pdf",   # The directory you want to save the file in
     width = 10,  # The width of the plot in inches

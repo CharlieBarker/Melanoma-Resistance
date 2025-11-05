@@ -172,6 +172,7 @@ genename_df <- AnnotationDbi::select(EnsDb.Hsapiens.v86, keys = as.character(fac
 factor_centrality$names <- genename_df$GENENAME[match(factor_centrality$ind, genename_df$UNIPROTID)]
 
 factor_centrality$names[factor_centrality$rank > 25] <- ""
+# write.csv(factor_centrality, file = 'paper/all_figure_data/3A.csv')
 
 centrality_plots<-ggplot(factor_centrality, aes(x = rank, y = values, label = names)) +
   geom_point(color = "darkred") +

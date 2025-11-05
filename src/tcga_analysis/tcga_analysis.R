@@ -35,7 +35,7 @@ fetch_and_prepare_data <- function(extract_new=F) {
     dir.create(dirname(file_path), recursive = TRUE, showWarnings = FALSE)
     
     # Write the dataframe `df` to the CSV file
-    write.csv(counts, file = file_path, row.names = FALSE)
+    write.csv(counts, file = file_path, row.names = T)
     
     return(counts)
   }else{
@@ -200,6 +200,7 @@ f_contrast_acts <- f_contrast_acts %>%
   dplyr::filter(source %in% tfs)
 colors <- rev(RColorBrewer::brewer.pal(n = 11, name = "RdBu")[c(2, 10)])
 
+write.csv(x = f_contrast_acts[f_contrast_acts$p_value < 0.05,], file = "./paper/all_figure_data/5D.csv")
 
 p <- ggplot2::ggplot(data = f_contrast_acts[f_contrast_acts$p_value < 0.05,],
                      mapping = ggplot2::aes(x = stats::reorder(source, score),

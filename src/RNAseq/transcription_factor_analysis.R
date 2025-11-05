@@ -19,7 +19,7 @@ library(cowplot)
 library(ggpubr)
 
 # Define directory with the files
-tf_activity_dir <- '/Users/charliebarker/Desktop/Melanoma_Resistance/results/tf_activity/'
+tf_activity_dir <- '~/Desktop/Melanoma_Resistance/results/tf_activity/'
 
 # List all CSV files in the directory
 tf_files <- list.files(tf_activity_dir, pattern = '*_tf_acts.csv', full.names = TRUE)
@@ -66,7 +66,8 @@ for (acts_file in tf_files) {
     warning(paste("No corresponding p-values file found for", acts_file))
   }
 }
-
+figure_df<-vol_plot_list$`/home/charlie/Desktop/Melanoma_Resistance/results/tf_activity//Untreated_WT_vs_Untreated_ARID1A_KO_tf_acts.csv`
+write.csv(figure_df[order(figure_df$logFC),], file = 'paper/all_figure_data/5A.csv')
 df <- do.call("rbind", vol_plot_list)
 rownames(df)<-NULL
 

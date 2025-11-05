@@ -123,6 +123,8 @@ pdf(file = "~/Desktop/Melanoma_Resistance/results/kinomics_microarray/prkd1_stor
     width = 6.5,  # The width of the plot in inches
     height = 6) # The height of the plot in inches
 drug_targets$experiment[drug_targets$experiment=="ARID1A_KO/ARID1A Combined vs Untreated"] <- "ARID1A KO/Combined vs Untreated"
+write.csv(drug_targets, file = 'paper/all_figure_data/4G.csv')
+
 ggplot(drug_targets[!is.na(drug_targets$experiment),], 
        aes(x = Gene_name, y = `Median Kinase Statistic`,
            colour = `Median Kinase Statistic`)) +
