@@ -36,13 +36,13 @@ figure 4
 4A - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/ARID1A_heatmaps.R
 4B - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/ARID1A_heatmaps.R
 4C - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/random_walk_diffusion.R
-4E - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/ephrin_diffusion.R
+4E - ~/Desktop/Melanoma_Resistance/src/ARID1A_heatdiffusion/ephrin_diffusion.R *
 4G - ~/Desktop/Melanoma_Resistance/src/kinomic_analysis/prkd1_story.R
 
 figure 5
-5A -
-5B -
-5C -
-5D - 
-5E -
+5A - ~/Desktop/Melanoma_Resistance/src/RNAseq/transcription_factor_analysis.R
+5B - ~/Desktop/Melanoma_Resistance/src/RNAseq/transcription_factor_analysis.R
+5C - *
+5D - ~/Desktop/Melanoma_Resistance/src/tcga_analysis/tcga_analysis.R
+5E - *
 
